@@ -13,8 +13,6 @@ Course Assistant Chatbot là hệ thống chatbot “Trợ giảng” cho từng
 ## Ports / Services
 - Frontend: http://localhost:5173
 - Backend:  http://localhost:8001
-- Backend health: http://localhost:8001/api/health
-- Frontend → proxy `/api/*` sang Backend: http://localhost:5173/api/health
 - ChromaDB: http://localhost:8000
 - PostgreSQL: localhost:5432
 
