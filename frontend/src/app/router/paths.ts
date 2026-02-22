@@ -19,10 +19,6 @@ export const paths = {
   },
 } as const;
 
-/**
- * Backward-compatible export (để code anh đang dùng PATHS.* không phải sửa nhiều)
- * Đồng thời vẫn giữ `paths.teacher.dashboard` cho code bạn anh.
- */
 export const PATHS = {
   LOGIN: paths.auth.login,
   ROLE: paths.auth.role,
