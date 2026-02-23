@@ -1,3 +1,4 @@
+//src\components\student\ChatSidebar.tsx
 import { useMemo, useState } from "react";
 import newChatIcon from "../../assets/icons/icon_edit.png";
 import quizIcon from "../../assets/icons/icon_quiz.png";

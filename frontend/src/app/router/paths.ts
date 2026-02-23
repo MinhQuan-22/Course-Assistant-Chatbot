@@ -13,6 +13,7 @@ export const paths = {
   },
   student: {
     chat: "/student/chat",
+    quiz: "/student/quiz",
     trackProgress: "/student/track-progress",
     quizSuccess: "/student/quiz/success",
     quizFail: "/student/quiz/fail",

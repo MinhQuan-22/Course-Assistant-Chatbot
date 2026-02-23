@@ -1,3 +1,4 @@
+//src\pages\student\ChatPage.tsx
 import ChatMessage from "../../components/student/ChatMessage";
 import ChatComposer from "../../components/student/ChatComposer";
 

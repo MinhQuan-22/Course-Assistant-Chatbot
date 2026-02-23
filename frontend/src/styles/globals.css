@@ -1,3 +1,19 @@
+:root {
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.65);
+
+  --bg0: #050a2a;
+  --bg1: #02051a;
+
+  --panel: rgba(255, 255, 255, 0.08);
+  --panel2: rgba(255, 255, 255, 0.10);
+
+  --accent: #22b3d6;
+
+  --radius: 22px;
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -760,4 +776,194 @@ a {
 }
 .chat-signout {
   font-size: 16px;
+}
+
+/* ========== QUIZ GENERATOR UI ========== */
+.quiz-page {
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.quiz-create {
+  position: relative;
+  width: min(980px, 100%);
+  margin: 18px auto 0;
+  border-radius: 18px;
+  background: rgba(120, 140, 220, 0.22);
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.quiz-ico-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.quiz-ico-btn img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: block;
+}
+
+/* make send icon bigger (only icon, not button) */
+.quiz-send img {
+  width: 34px;
+  height: 34px;
+}
+
+.quiz-create-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 18px;
+}
+.quiz-create-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.quiz-bot-floating {
+  position: absolute;
+  right: 18px;
+  top: -22px;
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.quiz-disclaimer {
+  width: min(980px, 100%);
+  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.quiz-list {
+  width: min(980px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-bottom: 24px;
+}
+
+.quiz-card {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(120, 140, 220, 0.10);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.quiz-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 6px 12px;
+}
+
+.quiz-avatar {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.quiz-header-title {
+  font-size: 18px;
+  font-weight: 650;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.quiz-question-box {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.14);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.quiz-question-title {
+  font-size: 20px;
+  font-weight: 650;
+  margin-bottom: 14px;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.quiz-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.90);
+}
+
+.quiz-option input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.quiz-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 14px 6px 4px;
+}
+
+.quiz-btn {
+  height: 42px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font-size: 16px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.quiz-btn-primary {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.quiz-btn-ghost {
+  background: transparent;
+}
+
+.quiz-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* highlight items in chat sidebar */
+.chat-side-action:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+}
+
+.chat-side-action.is-active {
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  border-radius: 16px;
 }

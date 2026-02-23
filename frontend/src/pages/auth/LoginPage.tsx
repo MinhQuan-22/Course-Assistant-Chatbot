@@ -72,7 +72,7 @@ export default function LoginPage() {
                 border: "1px dashed rgba(255,255,255,0.25)",
                 display: "grid",
                 placeItems: "center",
-                color: "rgba(255,255,255,0.65)",
+                color: "rgba(6,11,47,1)",
               }}
             >
               TODO: Robot illustration (export từ Figma)

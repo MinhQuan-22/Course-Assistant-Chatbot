@@ -19,6 +19,9 @@ import DashboardPage from "@/pages/teacher/DashboardPage";
 import ChatLayout from "@/layouts/ChatLayout";
 import ChatPage from "@/pages/student/ChatPage";
 
+// Quiz Generator page
+import QuizGeneratorPage from "@/pages/student/QuizGeneratorPage";
+
 function NotFound() {
   return (
     <div style={{ padding: 24, color: "white" }}>
@@ -60,11 +63,19 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // Student chat area (layout + children)
+  // Student area (ChatLayout wrapper + children)
   {
     path: "/student",
     element: <ChatLayout />,
-    children: [{ path: "chat", element: <ChatPage /> }],
+    children: [
+      { index: true, element: <Navigate to="chat" replace /> },
+
+      // Chat page
+      { path: "chat", element: <ChatPage /> },
+
+      // Quiz generator page
+      { path: "quiz", element: <QuizGeneratorPage /> },
+    ],
   },
 
   // Student standalone pages (anh) — giữ nguyên layout theo thiết kế anh làm

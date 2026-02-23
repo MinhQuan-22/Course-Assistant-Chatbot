@@ -1,3 +1,4 @@
+//src\layouts\ChatLayout.tsx
 import { Outlet } from "react-router-dom";
 import ChatSidebar from "../components/student/ChatSidebar";
 import ChatTopbar from "../components/student/ChatTopbar";
