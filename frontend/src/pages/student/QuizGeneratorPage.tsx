@@ -101,7 +101,7 @@ export default function QuizGeneratorPage() {
           return (
             <section key={q.id} className="quiz-card">
               <div className="quiz-card-header">
-                <img className="quiz-avatar" src={sendIcon} alt="" />
+                <img className="quiz-avatar" src={botIcon} alt="" />
                 <div className="quiz-header-text">
                   <div className="quiz-header-title">
                     Question {qIndex} of {questions.length}
