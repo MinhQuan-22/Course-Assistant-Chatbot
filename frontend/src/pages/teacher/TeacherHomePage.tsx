@@ -1,3 +1,4 @@
+//src\pages\teacher\TeacherHomePage.tsx
 export default function TeacherHomePage() {
   return (
     <div className="page">

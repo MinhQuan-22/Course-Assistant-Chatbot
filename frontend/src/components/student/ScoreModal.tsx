@@ -1,3 +1,4 @@
+//src\components\student\ScoreModal.tsx
 type Props = {
   open: boolean;
   variant: "success" | "fail";

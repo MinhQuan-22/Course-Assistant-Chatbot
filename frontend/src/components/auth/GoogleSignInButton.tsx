@@ -1,3 +1,4 @@
+//src\components\auth\GoogleSignInButton.tsx
 type Props = {
   onClick?: () => void;
 };

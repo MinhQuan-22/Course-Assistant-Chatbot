@@ -1,3 +1,4 @@
+//src\pages\student\QuizSuccessPage.tsx
 import { useState } from "react";
 import ChatbotSidebar from "@/components/student/ChatSidebar";
 import QuizGeneratorPage from "@/pages/student/QuizGeneratorPage";

@@ -1,3 +1,4 @@
+//src\components\student\ProgressCard.tsx
 import type { ReactNode } from "react";
 
 type Props = {

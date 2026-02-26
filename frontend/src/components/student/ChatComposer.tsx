@@ -1,3 +1,4 @@
+//src\components\student\ChatComposer.tsx
 import { useState } from "react";
 import micIcon from "../../assets/icons/icon_mic.png";
 import sendIcon from "../../assets/icons/search_chatbot.png";

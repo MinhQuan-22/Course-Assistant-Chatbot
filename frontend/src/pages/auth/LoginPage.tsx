@@ -1,3 +1,5 @@
+//src\pages\auth\LoginPage.tsx
+
 import { useNavigate } from "react-router-dom";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { PATHS } from "@/app/router/paths";
@@ -72,7 +74,7 @@ export default function LoginPage() {
                 border: "1px dashed rgba(255,255,255,0.25)",
                 display: "grid",
                 placeItems: "center",
-                color: "rgba(6,11,47,1)",
+                color: "rgba(255,255,255,0.65)",
               }}
             >
               TODO: Robot illustration (export từ Figma)
