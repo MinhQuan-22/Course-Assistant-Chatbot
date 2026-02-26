@@ -12,6 +12,7 @@ export const paths = {
     list: "/teacher/list",
   },
   student: {
+    newChat: "/student/new",
     chat: "/student/chat",
     quiz: "/student/quiz",
     trackProgress: "/student/track-progress",

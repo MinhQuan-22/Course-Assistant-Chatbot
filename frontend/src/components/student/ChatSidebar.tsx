@@ -1,14 +1,16 @@
 //src\components\student\ChatSidebar.tsx
+// src/components/student/ChatSidebar.tsx
 import { useMemo, useState } from "react";
+import { NavLink } from "react-router-dom";
+import { paths } from "@/app/router/paths";
+
 import newChatIcon from "../../assets/icons/icon_edit.png";
 import quizIcon from "../../assets/icons/icon_quiz.png";
 import trackIcon from "../../assets/icons/icon_progress.png";
 
-
 type ChatHistoryItem = { id: string; title: string };
 
 export default function ChatSidebar() {
-  // UI-only: simulate "has chats" vs "no chats"
   const [history] = useState<ChatHistoryItem[]>([
     { id: "1", title: "What is programming?" },
     { id: "2", title: "What is programming?" },
@@ -22,9 +24,13 @@ export default function ChatSidebar() {
   return (
     <aside className="chat-sidebar">
       <div className="chat-side-top">
-        <SideAction iconSrc={newChatIcon} label="New Chat" onClick={() => {}} />
-        <SideAction iconSrc={quizIcon} label="Quiz Generator" onClick={() => {}} />
-        <SideAction iconSrc={trackIcon} label="Track Progress" onClick={() => {}} />
+        <SideNav iconSrc={newChatIcon} label="New Chat" to={paths.student.newChat} />
+        <SideNav iconSrc={quizIcon} label="Quiz Generator" to={paths.student.quiz} />
+        <SideNav
+          iconSrc={trackIcon}
+          label="Track Progress"
+          to={paths.student.trackProgress}
+        />
       </div>
 
       {hasHistory && (
@@ -53,21 +59,26 @@ export default function ChatSidebar() {
   );
 }
 
-function SideAction({
+function SideNav({
   iconSrc,
   label,
-  onClick,
+  to,
 }: {
   iconSrc: string;
   label: string;
-  onClick: () => void;
+  to: string;
 }) {
   return (
-    <button className="chat-side-action" type="button" onClick={onClick}>
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        `chat-side-action ${isActive ? "is-active" : ""}`
+      }
+    >
       <span className="chat-side-action-ico">
         <img src={iconSrc} alt="" />
       </span>
       <span className="chat-side-action-text">{label}</span>
-    </button>
+    </NavLink>
   );
 }

@@ -1,8 +1,10 @@
+//src\components\common\Sidebar.tsx
 import { NavLink } from "react-router-dom";
 import { paths } from "../../app/router/paths";
 import dashboardIcon from "../../assets/icons/icon_dashboard.png";
 import uploadIcon from "../../assets/icons/icon_upload.png";
 import listIcon from "../../assets/icons/icon_list.png";
+import logo from "../../assets/icons/logo.png";
 
 function MenuItem({ to, label, iconSrc }: { to: string; label: string; iconSrc: string }) {
   return (
@@ -20,7 +22,7 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <div className="brand-logo">3N</div>
+        <img src={logo} alt="3N Logo" className="brand-logo-img" />
       </div>
 
       <nav className="side-nav">

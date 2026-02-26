@@ -1,4 +1,4 @@
-/* default is 16px → this reduces everything proportionally */
+/*src\styles\globals.css*/
 
 :root {
   --text: rgba(255, 255, 255, 0.92);
@@ -821,10 +821,15 @@ a {
   display: block;
 }
 
-/* make send icon bigger (only icon, not button) */
+/* bigger send button + icon */
+.quiz-send {
+  width: 56px;      /* was 46 via .quiz-ico-btn */
+  height: 56px;
+}
+
 .quiz-send img {
-  width: 34px;
-  height: 34px;
+  width: 44px;      /* bigger icon */
+  height: 44px;
 }
 
 .quiz-create-input {
@@ -883,9 +888,9 @@ a {
 }
 
 .quiz-avatar {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
+  width: 64x;
+  height: 64px;
+
 }
 
 .quiz-header-title {
@@ -968,4 +973,370 @@ a {
   background: var(--panel);
   box-shadow: var(--shadow);
   border-radius: 16px;
+}
+
+/* ========== CHAT MOBILE FIX ========== */
+@media (max-width: 768px) {
+  .chat-shell {
+    flex-direction: column; /* stack */
+  }
+
+  .chat-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 16px 14px;
+    gap: 12px;
+  }
+
+  /* Make sidebar actions compact */
+  .chat-side-action {
+    font-size: 16px;
+    padding: 8px 4px;
+    gap: 12px;
+  }
+  .chat-side-action-text {
+    font-size: 16px;
+  }
+  .chat-side-action-ico {
+    width: 34px;
+    height: 34px;
+  }
+  .chat-side-action-ico img {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Chat history should not eat whole screen */
+  .chat-history-title {
+    font-size: 14px;
+    margin: 10px 0 10px;
+  }
+  .chat-history-list {
+    max-height: 20vh;
+  }
+  .chat-history-item {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  /* Main area uses full width now */
+  .chat-main {
+    width: 100%;
+  }
+
+  .chat-topbar {
+    height: auto;
+    padding: 12px 14px;
+  }
+
+  .chat-content {
+    padding: 10px 14px 14px;
+  }
+
+  /* Make message bubbles/cards fit */
+  .chat-user-bubble {
+    max-width: 92%;
+    font-size: 14px;
+    padding: 12px 14px;
+  }
+
+  .chat-bot-card {
+    width: 100%;
+    padding: 14px;
+  }
+
+  .chat-bot-avatar {
+    width: 44px;
+    height: 44px;
+  }
+
+  .chat-bot-content {
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;  /* prevents 1-word-per-line weirdness */
+    overflow-wrap: anywhere;
+  }
+
+  .chat-bot-actions {
+    padding-left: 0; /* remove desktop alignment */
+    gap: 14px;
+  }
+
+  .chat-action-btn {
+    font-size: 14px;
+    gap: 8px;
+  }
+  .chat-action-btn img {
+    width: 18px;
+    height: 18px;
+  }
+
+  .chat-composer {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 16px;
+  }
+
+  .chat-input {
+    font-size: 14px;
+  }
+
+  .chat-ico-btn {
+    width: 42px;
+    height: 42px;
+  }
+  .chat-ico-btn img {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.chat-empty {
+  justify-content: center;
+}
+
+.chat-empty-title {
+  font-size: 42px;
+  font-weight: 500;
+  opacity: 0.9;
+  text-align: center;
+  margin-top: -8vh; /* slightly above center like ChatGPT */
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+.chat-shell {
+  height: 100vh;
+  overflow: hidden; /* prevent whole-page scroll */
+}
+
+.chat-sidebar {
+  height: 100vh;
+  overflow: hidden; /* sidebar itself doesn't scroll */
+}
+
+.chat-main {
+  height: 100vh;
+  overflow: hidden; /* keep scrolling inside content */
+}
+
+.chat-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;  /* ONLY this area scrolls */
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+.app-shell {
+  height: 100vh;
+  display: flex;
+  overflow: hidden; /* prevent whole page scroll */
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;   /* ONLY this scrolls */
+}
+/* ===== TEACHER SHELL ===== */
+.sidebar {
+  width: 260px;
+  height: 100vh;       /* full screen height */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;    /* sidebar itself doesn't scroll */
+}
+
+.brand {
+  padding: 6px 10px 18px;
+  display: flex;
+  align-items: center;
+}
+
+.brand-logo-img {
+  height: 64px;
+  filter: brightness(1.1);
+}
+
+.side-item {
+  padding: 12px 12px;           /* compact */
+  border-radius: 16px;
+  font-size: 16px;
+}
+
+.side-item.active {
+  background: rgba(255,255,255,0.10);
+  box-shadow: none;             /* less heavy */
+}
+
+.signout-btn {
+  font-size: 16px;
+  padding: 12px 14px;
+}
+
+/* ===== TOPBAR ===== */
+.topbar {
+  height: 76px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.topbar-search {
+  width: min(520px, 55vw);
+  padding: 10px 14px;
+}
+
+.topbar-search input {
+  font-size: 16px;              /* smaller */
+}
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+}
+
+/* ===== DASHBOARD GRID ===== */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 22px;
+  align-items: start;
+}
+
+/* top stat cards */
+.dash-row {
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 280px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.08);
+  box-shadow: none;
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.stat-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  font-size: 20px;
+}
+
+.stat-title {
+  font-size: 14px;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-size: 34px; /* was 56 */
+}
+
+/* chart */
+.chart-card {
+  border-radius: 18px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: none;
+  padding: 16px;
+}
+
+.chart {
+  height: 180px;
+  gap: 18px;
+  padding: 12px;
+}
+
+.bar {
+  width: 56px; /* was 86 */
+  border-radius: 12px 12px 0 0;
+}
+
+.section-title {
+  font-size: 24px;
+  margin: 18px 0 12px;
+}
+
+/* class cards */
+.class-row {
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.class-card {
+  width: 320px;
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: none;
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.class-img {
+  height: 150px;
+  border-radius: 14px;
+}
+
+.class-title {
+  font-size: 15px;
+}
+
+/* right panel */
+.panel {
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: none;
+  border-radius: 18px;
+}
+
+.panel-title {
+  font-size: 18px;
+}
+
+/* responsive */
+@media (max-width: 1200px) {
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.classes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.classes-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.class-row {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding-bottom: 8px;
+}
+
+.circle-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }

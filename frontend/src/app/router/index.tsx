@@ -19,6 +19,9 @@ import DashboardPage from "@/pages/teacher/DashboardPage";
 import ChatLayout from "@/layouts/ChatLayout";
 import ChatPage from "@/pages/student/ChatPage";
 
+//Empty chat page
+import ChatEmptyPage from "@/pages/student/ChatEmptyPage";
+
 // Quiz Generator page
 import QuizGeneratorPage from "@/pages/student/QuizGeneratorPage";
 
@@ -65,16 +68,13 @@ export const router = createBrowserRouter([
 
   // Student area (ChatLayout wrapper + children)
   {
-    path: "/student",
-    element: <ChatLayout />,
-    children: [
-      { index: true, element: <Navigate to="chat" replace /> },
-
-      // Chat page
-      { path: "chat", element: <ChatPage /> },
-
-      // Quiz generator page
-      { path: "quiz", element: <QuizGeneratorPage /> },
+  path: "/student",
+  element: <ChatLayout />,
+  children: [
+    { index: true, element: <Navigate to="new" replace /> }, // default now
+    { path: "new", element: <ChatEmptyPage /> },            // empty state
+    { path: "chat", element: <ChatPage /> },                // existing chat
+    { path: "quiz", element: <QuizGeneratorPage /> },
     ],
   },
 
