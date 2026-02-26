@@ -1,3 +1,5 @@
+/* default is 16px → this reduces everything proportionally */
+
 :root {
   --text: rgba(255, 255, 255, 0.92);
   --muted: rgba(255, 255, 255, 0.65);
