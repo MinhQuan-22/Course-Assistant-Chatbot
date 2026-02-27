@@ -1,7 +1,7 @@
 //src\components\student\ChatComposer.tsx
 import { useState } from "react";
-import micIcon from "../../assets/icons/icon_mic.png";
-import sendIcon from "../../assets/icons/search_chatbot.png";
+import micIcon from "../../assets/icon_mic.png";
+import sendIcon from "../../assets/search_chatbot.png";
 
 export default function ChatComposer({ onSend }: { onSend: (text: string) => void }) {
 const [value, setValue] = useState("");

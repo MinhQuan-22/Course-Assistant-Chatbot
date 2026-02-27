@@ -1,8 +1,8 @@
 //src\pages\student\QuizGeneratorPage.tsx
 import { useMemo, useState } from "react";
-import micIcon from "../../assets/icons/icon_mic.png";
-import sendIcon from "../../assets/icons/search_chatbot.png";
-import botIcon from "../../assets/icons/chatbot.png";
+import micIcon from "../../assets/icon_mic.png";
+import sendIcon from "../../assets/search_chatbot.png";
+import botIcon from "../../assets/chatbot.png";
 
 type QuizOption = {
   id: string;

@@ -1,10 +1,10 @@
 //src\components\common\Sidebar.tsx
 import { NavLink } from "react-router-dom";
 import { paths } from "../../app/router/paths";
-import dashboardIcon from "../../assets/icons/icon_dashboard.png";
-import uploadIcon from "../../assets/icons/icon_upload.png";
-import listIcon from "../../assets/icons/icon_list.png";
-import logo from "../../assets/icons/logo.png";
+import dashboardIcon from "../../assets/icon_dashboard.png";
+import uploadIcon from "../../assets/icon_upload.png";
+import listIcon from "../../assets/icon_list.png";
+import logo from "../../assets/logo.png";
 
 function MenuItem({ to, label, iconSrc }: { to: string; label: string; iconSrc: string }) {
   return (

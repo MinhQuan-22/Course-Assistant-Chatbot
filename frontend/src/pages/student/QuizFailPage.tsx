@@ -1,8 +1,8 @@
 //src\pages\student\QuizFailPage.tsx
 import { useState } from "react";
-import ChatbotSidebar from "@/components/student/ChatSidebar";
-import QuizGeneratorPage from "@/pages/student/QuizGeneratorPage";
-import ScoreModal from "@/components/student/ScoreModal";
+import ChatbotSidebar from "../../components/student/ChatSidebar";
+import QuizGeneratorPage from "../../pages/student/QuizGeneratorPage";
+import ScoreModal from "../../components/student/ScoreModal";
 
 export default function QuizSuccessPage() {
   const [open, setOpen] = useState(true);

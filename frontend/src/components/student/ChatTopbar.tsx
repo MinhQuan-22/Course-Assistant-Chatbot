@@ -1,7 +1,7 @@
 //src\components\student\ChatTopbar.tsx
-import logoIcon from "../../assets/icons/logo.png";
-import dropdownIcon from "../../assets/icons/icon_dropdown.png";
-import profileIcon from "../../assets/icons/icon_user.png";
+import logoIcon from "../../assets/logo.png";
+import dropdownIcon from "../../assets/icon_dropdown.png";
+import profileIcon from "../../assets/icon_user.png";
 
 
 export default function ChatTopbar() {

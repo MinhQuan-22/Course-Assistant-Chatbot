@@ -1,7 +1,7 @@
 //src\components\student\ChatMessage.tsx
-import botIcon from "../../assets/icons/chatbot.png";
-import regenerateIcon from "../../assets/icons/icon_history.png";
-import fileIcon from "../../assets/icons/icon_file.png";
+import botIcon from "../../assets/chatbot.png";
+import regenerateIcon from "../../assets/icon_history.png";
+import fileIcon from "../../assets/icon_file.png";
 
 export default function ChatMessage({
   variant,

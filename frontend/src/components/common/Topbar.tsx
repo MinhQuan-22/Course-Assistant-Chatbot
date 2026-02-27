@@ -1,7 +1,7 @@
 //src\components\common\Topbar.tsx
-import notiIcon from "../../assets/icons/icon_noti.png";
-import userIcon from "../../assets/icons/icon_user.png";
-import searchIcon from "../../assets/icons/icon_search.png";
+import notiIcon from "../../assets/icon_noti.png";
+import userIcon from "../../assets/icon_user.png";
+import searchIcon from "../../assets/icon_search.png";
 
 export default function Topbar() {
   return (

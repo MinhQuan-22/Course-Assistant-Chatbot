@@ -1,7 +1,7 @@
 //src\pages\student\TrackProgressPage.tsx
 import { useNavigate } from "react-router-dom";
-import ProgressCard from "@/components/student/ProgressCard";
-import { PATHS } from "@/app/router/paths";
+import ProgressCard from "../../components/student/ProgressCard";
+import { PATHS } from "../../app/router/paths";
 
 export default function TrackProgressPage() {
   const nav = useNavigate();

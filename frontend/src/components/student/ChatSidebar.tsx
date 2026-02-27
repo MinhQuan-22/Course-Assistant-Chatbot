@@ -2,11 +2,11 @@
 // src/components/student/ChatSidebar.tsx
 import { useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { paths } from "@/app/router/paths";
+import { paths } from "../../app/router/paths";
 
-import newChatIcon from "../../assets/icons/icon_edit.png";
-import quizIcon from "../../assets/icons/icon_quiz.png";
-import trackIcon from "../../assets/icons/icon_progress.png";
+import newChatIcon from "../../assets/icon_edit.png";
+import quizIcon from "../../assets/icon_quiz.png";
+import trackIcon from "../../assets/icon_progress.png";
 
 type ChatHistoryItem = { id: string; title: string };
 

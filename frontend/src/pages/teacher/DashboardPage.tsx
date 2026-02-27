@@ -1,6 +1,6 @@
 // src/pages/teacher/DashboardPage.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
-import manWithLaptop from "@/assets/icons/manwithlaptop.jpg";
+import manWithLaptop from "../../assets/manwithlaptop.jpg";
 
 type DemoClass = {
   code: string;

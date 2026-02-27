@@ -1,5 +1,5 @@
 // src/pages/student/ChatEmptyPage.tsx
-import ChatComposer from "@/components/student/ChatComposer";
+import ChatComposer from "../../components/student/ChatComposer";
 
 export default function ChatEmptyPage() {
   return (

@@ -53,10 +53,215 @@ a {
 }
 
 /*login part*/
+.login-page {
+  min-height: 100vh;
+  background-image: url("/src/assets/login.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 
+  display: flex;
+  align-items: center;
+}
+
+.login-logo {
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  height: 104px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(1.1);
+}
+
+.login-content {
+  margin-left: 72px;                
+  max-width: 520px;
+}
+
+.login-title {
+  margin: 0;
+  font-size: 60px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.95);
+}
+
+.login-sub {
+  margin-top: 16px;
+  font-size: 28px;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.70);
+}
+
+.login-cta {
+  margin-top: 26px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .login-hero {
+    aspect-ratio: auto;
+    min-height: 520px;
+    padding: 24px;
+  }
+
+  .login-content {
+    margin-left: 0;
+    max-width: 520px;
+  }
+
+  .login-title {
+    font-size: 34px;
+  }
+}
+
+/* Google Sign In Button */
+.google-btn {
+  height: 60px;
+  padding: 0 24px;
+  border-radius: 18px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+
+  background: #ffffff;
+  color: #1f2937;
+
+  border: none;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  transition: 0.2s ease;
+}
+
+.google-btn img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+.google-btn:hover {
+  transform: translateY(-2px);
+}
+
+.google-btn:active {
+  transform: translateY(0);
+}
 
 /*role selection part*/
+/* ===== ROLE SELECT PAGE CLEAN ===== */
 
+.role-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.role-shell {
+  width: 100%;
+  max-width: 1100px;
+  padding: 60px 40px;
+}
+
+.role-logo {
+  position: absolute;
+  top: 30px;
+  left: 40px;
+  height: 102px;
+}
+
+.role-card {
+  background: transparent;
+  border: none;
+  padding: 0;
+  min-height: auto;
+}
+
+.role-center {
+  text-align: center;
+}
+
+.role-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  margin-bottom: 36px;
+}
+
+.role-robot {
+  width: 110px;       
+  height: 210px;
+  object-fit: contain;
+  transform: translateY(6px); 
+}
+
+.role-title {
+  margin: 0;
+  font-size: 38px;     
+  font-weight: 800;
+  color: rgba(255,255,255,0.95);
+}
+
+.role-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 34px;
+}
+
+.role-btn {
+  width: 420px;      
+  height: 92px;
+  border-radius: 22px;
+
+  border: none;
+  cursor: pointer;
+
+  background: #ffffff;
+  color: #111827;
+
+  font-size: 34px;   
+  font-weight: 600;
+
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+}
+
+.role-btn:hover {
+  transform: translateY(-2px);
+}
+
+.role-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 980px) {
+  .role-title {
+    font-size: 32px;
+  }
+
+  .role-robot {
+    width: 76px;
+    height: 76px;
+  }
+
+  .role-actions {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .role-btn {
+    width: min(420px, 90vw);
+    height: 72px;
+    font-size: 22px;
+  }
+}
 
 /*teacher part*/
 /*teacher dashboard_dashboardlayout.tsx*/
