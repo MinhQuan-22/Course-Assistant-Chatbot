@@ -15,6 +15,13 @@ import QuizFailPage from "@/pages/student/QuizFailPage";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import DashboardPage from "@/pages/teacher/DashboardPage";
 
+// Jou teacher pages
+import UploadFilePage from "@/pages/teacher/UploadFilePage";
+import FileListPage from "@/pages/teacher/FileListPage";
+import ClassDetailPage from "@/pages/teacher/ClassDetailPage";
+import QuizResultTeacherPage from "@/pages/teacher/QuizResultTeacherPage";
+import TeacherClassesPage from "@/pages/teacher/TeacherClassesPage";
+
 // Student chat layout/pages (bạn anh)
 import ChatLayout from "@/layouts/ChatLayout";
 import ChatPage from "@/pages/student/ChatPage";
@@ -49,23 +56,19 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="dashboard" replace /> },
       { path: "dashboard", element: <DashboardPage /> },
-      {
-        path: "upload",
-        element: (
-          <div style={{ color: "white", padding: 24 }}>Upload Page (todo)</div>
-        ),
-      },
-      {
-        path: "list",
-        element: (
-          <div style={{ color: "white", padding: 24 }}>
-            File List Page (todo)
-          </div>
-        ),
-      },
-    ],
-  },
+      // Jou pages
+        { path: "upload", element: <UploadFilePage /> },
+        { path: "list", element: <FileListPage /> },
 
+        // (Jou)
+        { path: "class/:classCode", element: <ClassDetailPage /> },
+        { path: "results", element: <QuizResultTeacherPage /> },
+        { path: "class/:classCode/results", element: <QuizResultTeacherPage /> },
+        { path: "classes", element: <TeacherClassesPage /> },
+
+        ],
+      },
+      
   // Student area (ChatLayout wrapper + children)
   {
   path: "/student",

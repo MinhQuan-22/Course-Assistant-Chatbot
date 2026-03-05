@@ -37,5 +37,6 @@ export const PATHS = {
     DASHBOARD: paths.teacher.dashboard,
     UPLOAD: paths.teacher.upload,
     LIST: paths.teacher.list,
+    
   },
 } as const;
