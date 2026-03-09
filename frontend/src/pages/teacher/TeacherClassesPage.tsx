@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 type ClassRow = {
@@ -58,13 +58,43 @@ export default function TeacherClassesPage() {
 
   const rows: ClassRow[] = useMemo(
     () => [
-      { code: "21020105", name: "Introduction to Programming", semester: "2025-2026", students: 42, updatedAt: "21.01.2025" },
-      { code: "21020106", name: "Design Patterns", semester: "2025-2026", students: 36, updatedAt: "18.01.2025" },
-      { code: "21020107", name: "Database Systems", semester: "2025-2026", students: 48, updatedAt: "10.01.2025" },
-      { code: "21020108", name: "Web Development", semester: "2025-2026", students: 40, updatedAt: "05.01.2025" },
-      { code: "21020109", name: "Data Mining", semester: "2025-2026", students: 33, updatedAt: "02.01.2025" },
+      {
+        code: "21020105",
+        name: "Introduction to Programming",
+        semester: "2025-2026",
+        students: 42,
+        updatedAt: "21.01.2025",
+      },
+      {
+        code: "21020106",
+        name: "Design Patterns",
+        semester: "2025-2026",
+        students: 36,
+        updatedAt: "18.01.2025",
+      },
+      {
+        code: "21020107",
+        name: "Database Systems",
+        semester: "2025-2026",
+        students: 48,
+        updatedAt: "10.01.2025",
+      },
+      {
+        code: "21020108",
+        name: "Web Development",
+        semester: "2025-2026",
+        students: 40,
+        updatedAt: "05.01.2025",
+      },
+      {
+        code: "21020109",
+        name: "Data Mining",
+        semester: "2025-2026",
+        students: 33,
+        updatedAt: "02.01.2025",
+      },
     ],
-    []
+    [],
   );
 
   const filtered = useMemo(() => {
@@ -74,16 +104,26 @@ export default function TeacherClassesPage() {
       (r) =>
         r.code.toLowerCase().includes(s) ||
         r.name.toLowerCase().includes(s) ||
-        r.semester.toLowerCase().includes(s)
+        r.semester.toLowerCase().includes(s),
     );
   }, [q, rows]);
 
   return (
     <div style={{ padding: "34px 44px", color: "rgba(255,255,255,0.95)" }}>
       <div style={{ maxWidth: 1040, margin: "0 auto" }}>
-        <div style={{ opacity: 0.7, fontSize: 14, marginBottom: 8 }}>teacher classes</div>
+        <div style={{ opacity: 0.7, fontSize: 14, marginBottom: 8 }}>
+          teacher classes
+        </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end", gap: 12, marginBottom: 18 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "end",
+            gap: 12,
+            marginBottom: 18,
+          }}
+        >
           <div style={{ fontSize: 34, fontWeight: 900 }}>All Classes</div>
 
           <input
@@ -145,7 +185,9 @@ export default function TeacherClassesPage() {
               <div style={{ fontWeight: 900 }}>{r.code}</div>
               <div style={{ fontWeight: 700, opacity: 0.95 }}>
                 {r.name}
-                <div style={{ opacity: 0.65, fontSize: 13, marginTop: 4 }}>Updated: {r.updatedAt}</div>
+                <div style={{ opacity: 0.65, fontSize: 13, marginTop: 4 }}>
+                  Updated: {r.updatedAt}
+                </div>
               </div>
               <div style={{ opacity: 0.9 }}>{r.semester}</div>
               <div style={{ opacity: 0.9 }}>{r.students}</div>
@@ -174,7 +216,9 @@ export default function TeacherClassesPage() {
             </div>
           ))}
 
-          {!filtered.length && <div style={{ padding: 18, opacity: 0.8 }}>No classes found.</div>}
+          {!filtered.length && (
+            <div style={{ padding: 18, opacity: 0.8 }}>No classes found.</div>
+          )}
         </div>
 
         <div style={{ marginTop: 14, opacity: 0.65, fontSize: 13 }}>

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 type FileCategory = "Lecture" | "Assignment" | "Exam" | "Other";
 
@@ -63,7 +63,9 @@ function randId() {
 }
 
 export default function UploadFilePage() {
-  const [classCode, setClassCode] = useState<string>(MOCK_CLASSES[0]?.code ?? "");
+  const [classCode, setClassCode] = useState<string>(
+    MOCK_CLASSES[0]?.code ?? "",
+  );
   const [category, setCategory] = useState<FileCategory>("Lecture");
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [dragOver, setDragOver] = useState(false);
@@ -72,7 +74,7 @@ export default function UploadFilePage() {
 
   const selectedClass = useMemo(
     () => MOCK_CLASSES.find((c) => c.code === classCode),
-    [classCode]
+    [classCode],
   );
 
   const onFilesSelected = useCallback(
@@ -93,7 +95,7 @@ export default function UploadFilePage() {
 
       setQueue((prev) => [...items, ...prev]);
     },
-    [classCode, category]
+    [classCode, category],
   );
 
   const startUploadAll = () => {
@@ -111,17 +113,29 @@ export default function UploadFilePage() {
     }, 1500);
   };
 
-  const removeItem = (id: string) => setQueue((prev) => prev.filter((x) => x.id !== id));
+  const removeItem = (id: string) =>
+    setQueue((prev) => prev.filter((x) => x.id !== id));
 
   const pickFiles = () => inputRef.current?.click();
 
   return (
     <div style={{ padding: "34px 44px", color: "rgba(255,255,255,0.95)" }}>
-      <div style={{ maxWidth: 980, margin: "0 auto", display: "grid", gap: 18 }}>
+      <div
+        style={{ maxWidth: 980, margin: "0 auto", display: "grid", gap: 18 }}
+      >
         {/* Title */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end", gap: 12 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "end",
+            gap: 12,
+          }}
+        >
           <div>
-            <div style={{ opacity: 0.7, fontSize: 14 }}>teacher upload file</div>
+            <div style={{ opacity: 0.7, fontSize: 14 }}>
+              teacher upload file
+            </div>
             <div style={{ fontSize: 34, fontWeight: 900 }}>Upload</div>
           </div>
 
@@ -132,7 +146,9 @@ export default function UploadFilePage() {
               padding: "10px 16px",
               borderRadius: 14,
               border: "1px solid rgba(255,255,255,0.16)",
-              background: queue.length ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
+              background: queue.length
+                ? "rgba(255,255,255,0.08)"
+                : "rgba(255,255,255,0.04)",
               color: "rgba(255,255,255,0.92)",
               cursor: queue.length ? "pointer" : "not-allowed",
               fontWeight: 900,
@@ -152,7 +168,9 @@ export default function UploadFilePage() {
             boxShadow: "0 18px 50px rgba(0,0,0,0.35)",
           }}
         >
-          <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 10 }}>Choose your class</div>
+          <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 10 }}>
+            Choose your class
+          </div>
           <select
             value={classCode}
             onChange={(e) => setClassCode(e.target.value)}
@@ -190,7 +208,9 @@ export default function UploadFilePage() {
             boxShadow: "0 18px 50px rgba(0,0,0,0.35)",
           }}
         >
-          <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 10 }}>Choose your file category</div>
+          <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 10 }}>
+            Choose your file category
+          </div>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as FileCategory)}
@@ -233,7 +253,9 @@ export default function UploadFilePage() {
             display: "grid",
             placeItems: "center",
             background: "rgba(85, 100, 170, 0.22)",
-            border: dragOver ? "2px solid rgba(255,255,255,0.65)" : "1px solid rgba(255,255,255,0.14)",
+            border: dragOver
+              ? "2px solid rgba(255,255,255,0.65)"
+              : "1px solid rgba(255,255,255,0.14)",
             boxShadow: "0 18px 50px rgba(0,0,0,0.35)",
             transition: "all .12s ease",
           }}
@@ -249,7 +271,9 @@ export default function UploadFilePage() {
 
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 54, marginBottom: 8 }}>⬆️</div>
-            <div style={{ fontSize: 24, fontWeight: 900, marginBottom: 8 }}>Upload files here</div>
+            <div style={{ fontSize: 24, fontWeight: 900, marginBottom: 8 }}>
+              Upload files here
+            </div>
             <div style={{ opacity: 0.85, fontWeight: 700 }}>
               (PDF, DOCX, TXT)
             </div>
@@ -302,7 +326,15 @@ export default function UploadFilePage() {
                     </div>
                   </div>
                   <div style={{ opacity: 0.9 }}>{q.createdAt}</div>
-                  <div style={{ opacity: 0.9, fontWeight: 900, textTransform: "uppercase" }}>{q.status}</div>
+                  <div
+                    style={{
+                      opacity: 0.9,
+                      fontWeight: 900,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {q.status}
+                  </div>
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>
                     <button
                       onClick={() => removeItem(q.id)}
@@ -326,7 +358,8 @@ export default function UploadFilePage() {
         </div>
 
         <div style={{ opacity: 0.7, fontSize: 13 }}>
-          Note: This page is UI-only (mock). Later you can connect to API upload.
+          Note: This page is UI-only (mock). Later you can connect to API
+          upload.
         </div>
       </div>
     </div>

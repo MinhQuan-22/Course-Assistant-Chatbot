@@ -17,7 +17,7 @@ export default function ChatMessage({
   onViewDoc?: () => void;
 }) {
   return (
-    <div className="chat-bot-card">
+    <div className="chat-bot-card" data-variant={variant}>
       <div className="chat-bot-body">
         <img className="chat-bot-avatar" src={botIcon} alt="" />
         <div className="chat-bot-text">
@@ -27,7 +27,11 @@ export default function ChatMessage({
       </div>
 
       <div className="chat-bot-actions">
-        <button type="button" className="chat-action-btn" onClick={onRegenerate}>
+        <button
+          type="button"
+          className="chat-action-btn"
+          onClick={onRegenerate}
+        >
           <img src={regenerateIcon} alt="" />
           <span>Regenerate</span>
         </button>

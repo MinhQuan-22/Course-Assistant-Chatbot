@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type Row = { id: string; name: string; type: string; date: string };
 
@@ -11,7 +11,12 @@ function IconEdit() {
         strokeWidth="1.8"
         strokeLinejoin="round"
       />
-      <path d="M13 6l5 5" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="M13 6l5 5"
+        stroke="rgba(255,255,255,0.9)"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -19,11 +24,36 @@ function IconEdit() {
 function IconTrash() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M6 7h12" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M9 7V5h6v2" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M8 7l1 14h6l1-14" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M10 11v6" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M14 11v6" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="M6 7h12"
+        stroke="rgba(255,255,255,0.9)"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M9 7V5h6v2"
+        stroke="rgba(255,255,255,0.9)"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 7l1 14h6l1-14"
+        stroke="rgba(255,255,255,0.9)"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10 11v6"
+        stroke="rgba(255,255,255,0.9)"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M14 11v6"
+        stroke="rgba(255,255,255,0.9)"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -43,7 +73,9 @@ function IconFilter() {
 
 export default function FileListPage() {
   const [filterOpen, setFilterOpen] = useState(false);
-  const [typeFilter, setTypeFilter] = useState<"All" | "Lecture" | "Assignment" | "Exam">("All");
+  const [typeFilter, setTypeFilter] = useState<
+    "All" | "Lecture" | "Assignment" | "Exam"
+  >("All");
 
   const [rows, setRows] = useState<Row[]>([
     { id: "f1", name: "Chapter 1", type: "Lecture", date: "21.01.2025" },
@@ -62,11 +94,22 @@ export default function FileListPage() {
   return (
     <div style={{ padding: "34px 44px", color: "rgba(255,255,255,0.95)" }}>
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
-        <div style={{ opacity: 0.7, fontSize: 14, marginBottom: 8 }}>teacher file list</div>
+        <div style={{ opacity: 0.7, fontSize: 14, marginBottom: 8 }}>
+          teacher file list
+        </div>
 
         {/* Title + Filter */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-          <div style={{ fontSize: 34, fontWeight: 900 }}>Total Uploaded Files</div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 18,
+          }}
+        >
+          <div style={{ fontSize: 34, fontWeight: 900 }}>
+            Total Uploaded Files
+          </div>
 
           <button
             onClick={() => setFilterOpen((v) => !v)}
@@ -165,7 +208,9 @@ export default function FileListPage() {
               <div style={{ opacity: 0.92 }}>{r.type}</div>
               <div style={{ opacity: 0.92 }}>{r.date}</div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 14 }}>
+              <div
+                style={{ display: "flex", justifyContent: "flex-end", gap: 14 }}
+              >
                 <button
                   onClick={() => alert(`Edit ${r.id} (mock)`)}
                   style={{
@@ -184,7 +229,9 @@ export default function FileListPage() {
                 </button>
 
                 <button
-                  onClick={() => setRows((prev) => prev.filter((x) => x.id !== r.id))}
+                  onClick={() =>
+                    setRows((prev) => prev.filter((x) => x.id !== r.id))
+                  }
                   style={{
                     width: 40,
                     height: 40,
@@ -203,7 +250,9 @@ export default function FileListPage() {
             </div>
           ))}
 
-          {!filtered.length && <div style={{ padding: 18, opacity: 0.8 }}>No files found.</div>}
+          {!filtered.length && (
+            <div style={{ padding: 18, opacity: 0.8 }}>No files found.</div>
+          )}
         </div>
       </div>
     </div>

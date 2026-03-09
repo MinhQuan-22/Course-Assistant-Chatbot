@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { IconChart, IconChat, IconDoc, IconHelp, IconUsers } from "../../components/teacher/icons";
+import {
+  IconChart,
+  IconDoc,
+  IconHelp,
+  IconUsers,
+} from "../../components/teacher/icons";
 
 type TabKey = "announcements" | "createQuiz" | "results";
 
@@ -19,7 +24,7 @@ export default function ClassDetailPage() {
       { id: "a4", week: "Week 1", title: "Introduction to Programming" },
       { id: "a5", week: "Week 1", title: "Introduction to Programming" },
     ],
-    []
+    [],
   );
 
   const students = useMemo(
@@ -35,16 +40,34 @@ export default function ClassDetailPage() {
       "Su Yi Phyo",
       "Su Yi Phyo",
     ],
-    []
+    [],
   );
 
   const quizRows = useMemo(
     () => [
-      { id: "q1", quiz: "Quiz 1", student: "Su Yi Phyo", score: "10/10", date: "21.01.2025" },
-      { id: "q2", quiz: "Quiz 1", student: "Su Yi Phyo", score: "10/10", date: "21.01.2025" },
-      { id: "q3", quiz: "Quiz 1", student: "Su Yi Phyo", score: "10/10", date: "21.01.2025" },
+      {
+        id: "q1",
+        quiz: "Quiz 1",
+        student: "Su Yi Phyo",
+        score: "10/10",
+        date: "21.01.2025",
+      },
+      {
+        id: "q2",
+        quiz: "Quiz 1",
+        student: "Su Yi Phyo",
+        score: "10/10",
+        date: "21.01.2025",
+      },
+      {
+        id: "q3",
+        quiz: "Quiz 1",
+        student: "Su Yi Phyo",
+        score: "10/10",
+        date: "21.01.2025",
+      },
     ],
-    []
+    [],
   );
 
   const TabBtn = ({
@@ -86,7 +109,9 @@ export default function ClassDetailPage() {
           Class Code - {classCode}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 22 }}>
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 22 }}
+        >
           {/* LEFT main card */}
           <div
             style={{
@@ -119,7 +144,13 @@ export default function ClassDetailPage() {
               />
             </div>
 
-            <div style={{ height: 1, background: "rgba(255,255,255,0.12)", margin: "0 20px" }} />
+            <div
+              style={{
+                height: 1,
+                background: "rgba(255,255,255,0.12)",
+                margin: "0 20px",
+              }}
+            />
 
             {/* Content */}
             <div style={{ padding: "10px 18px 18px" }}>
@@ -127,13 +158,31 @@ export default function ClassDetailPage() {
                 <div style={{ display: "grid" }}>
                   {announcements.map((a) => (
                     <div key={a.id} style={{ padding: "18px 8px" }}>
-                      <div style={{ fontSize: 26, fontWeight: 900, opacity: 0.95 }}>{a.week}</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10, opacity: 0.92 }}>
+                      <div
+                        style={{ fontSize: 26, fontWeight: 900, opacity: 0.95 }}
+                      >
+                        {a.week}
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          marginTop: 10,
+                          opacity: 0.92,
+                        }}
+                      >
                         <IconDoc />
                         <div style={{ fontSize: 18 }}>{a.title}</div>
                       </div>
 
-                      <div style={{ height: 1, background: "rgba(255,255,255,0.12)", marginTop: 18 }} />
+                      <div
+                        style={{
+                          height: 1,
+                          background: "rgba(255,255,255,0.12)",
+                          marginTop: 18,
+                        }}
+                      />
                     </div>
                   ))}
                 </div>
@@ -141,12 +190,24 @@ export default function ClassDetailPage() {
 
               {tab === "createQuiz" && (
                 <div style={{ padding: 16, opacity: 0.9 }}>
-                  <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 10 }}>Create Quiz (mock)</div>
+                  <div
+                    style={{ fontSize: 22, fontWeight: 900, marginBottom: 10 }}
+                  >
+                    Create Quiz (mock)
+                  </div>
                   <div style={{ opacity: 0.8, lineHeight: 1.6 }}>
-                    This tab is UI-only for now. You can connect it later to Quiz Generator (Suyi part).
+                    This tab is UI-only for now. You can connect it later to
+                    Quiz Generator (Suyi part).
                   </div>
 
-                  <div style={{ marginTop: 14, display: "grid", gap: 10, maxWidth: 520 }}>
+                  <div
+                    style={{
+                      marginTop: 14,
+                      display: "grid",
+                      gap: 10,
+                      maxWidth: 520,
+                    }}
+                  >
                     <input
                       placeholder="Quiz title..."
                       style={{
@@ -244,11 +305,26 @@ export default function ClassDetailPage() {
               height: "fit-content",
             }}
           >
-            <div style={{ fontSize: 22, fontWeight: 900, textAlign: "center", marginBottom: 12 }}>
+            <div
+              style={{
+                fontSize: 22,
+                fontWeight: 900,
+                textAlign: "center",
+                marginBottom: 12,
+              }}
+            >
               Student List
             </div>
 
-            <div style={{ display: "grid", gap: 10, maxHeight: 560, overflow: "auto", paddingRight: 6 }}>
+            <div
+              style={{
+                display: "grid",
+                gap: 10,
+                maxHeight: 560,
+                overflow: "auto",
+                paddingRight: 6,
+              }}
+            >
               {students.map((name, idx) => (
                 <div
                   key={`${name}-${idx}`}
@@ -286,7 +362,8 @@ export default function ClassDetailPage() {
 
         {/* tiny hint for future: */}
         <div style={{ marginTop: 14, opacity: 0.65, fontSize: 13 }}>
-          Tip: you can map route like <b>/teacher/class/:classCode</b> to open this page.
+          Tip: you can map route like <b>/teacher/class/:classCode</b> to open
+          this page.
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 type Row = {
@@ -7,7 +7,7 @@ type Row = {
   quizName: string;
   studentName: string;
   score: string; // "10/10"
-  date: string;  // "21.01.2025"
+  date: string; // "21.01.2025"
 };
 
 function IconFilter() {
@@ -26,9 +26,24 @@ function IconFilter() {
 function IconExport() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path d="M12 3v10" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M8 7l4-4 4 4" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M4 14v6h16v-6" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinejoin="round" />
+      <path
+        d="M12 3v10"
+        stroke="rgba(255,255,255,0.9)"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M8 7l4-4 4 4"
+        stroke="rgba(255,255,255,0.9)"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M4 14v6h16v-6"
+        stroke="rgba(255,255,255,0.9)"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -39,13 +54,22 @@ export default function QuizResultTeacherPage() {
   const isSingleClass = !!classCodeParam;
 
   const [openFilter, setOpenFilter] = useState(false);
-  const [classFilter, setClassFilter] = useState<string>(classCodeParam ?? "All");
+  const [classFilter, setClassFilter] = useState<string>(
+    classCodeParam ?? "All",
+  );
   const [quizFilter, setQuizFilter] = useState<string>("All");
   const [studentFilter, setStudentFilter] = useState<string>("All");
 
   // ✅ mock results for MANY classes
   const rowsAll: Row[] = useMemo(() => {
-    const base = (classCode: string, student: string, quiz: string, score: string, date: string, n: number) =>
+    const base = (
+      classCode: string,
+      student: string,
+      quiz: string,
+      score: string,
+      date: string,
+      n: number,
+    ) =>
       Array.from({ length: n }).map((_, i) => ({
         id: `${classCode}_${quiz}_${student}_${i}`,
         classCode,
@@ -57,7 +81,14 @@ export default function QuizResultTeacherPage() {
 
     return [
       ...base("21020105", "Su Yi Phyo", "Quiz 1", "10/10", "21.01.2025", 6),
-      ...base("21020105", "Mitthavong Benjouly", "Quiz 1", "9/10", "21.01.2025", 2),
+      ...base(
+        "21020105",
+        "Mitthavong Benjouly",
+        "Quiz 1",
+        "9/10",
+        "21.01.2025",
+        2,
+      ),
       ...base("21020106", "Su Yi Phyo", "Quiz 1", "8/10", "20.01.2025", 3),
       ...base("21020106", "Kiro", "Quiz 2", "7/10", "22.01.2025", 2),
       ...base("21020107", "Trang", "Quiz 1", "9/10", "19.01.2025", 2),
@@ -84,9 +115,11 @@ export default function QuizResultTeacherPage() {
 
   const rows = useMemo(() => {
     let r = rowsAll;
-    if (effectiveClassFilter !== "All") r = r.filter((x) => x.classCode === effectiveClassFilter);
+    if (effectiveClassFilter !== "All")
+      r = r.filter((x) => x.classCode === effectiveClassFilter);
     if (quizFilter !== "All") r = r.filter((x) => x.quizName === quizFilter);
-    if (studentFilter !== "All") r = r.filter((x) => x.studentName === studentFilter);
+    if (studentFilter !== "All")
+      r = r.filter((x) => x.studentName === studentFilter);
     return r;
   }, [rowsAll, effectiveClassFilter, quizFilter, studentFilter]);
 
@@ -99,15 +132,19 @@ export default function QuizResultTeacherPage() {
       rows.map((r) =>
         isSingleClass
           ? [r.quizName, r.studentName, r.score, r.date].join(",")
-          : [r.classCode, r.quizName, r.studentName, r.score, r.date].join(",")
-      )
+          : [r.classCode, r.quizName, r.studentName, r.score, r.date].join(","),
+      ),
     );
 
-    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([lines.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = isSingleClass ? `quiz_results_${classCodeParam}.csv` : `quiz_results_all_classes.csv`;
+    a.download = isSingleClass
+      ? `quiz_results_${classCodeParam}.csv`
+      : `quiz_results_all_classes.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -119,10 +156,20 @@ export default function QuizResultTeacherPage() {
   return (
     <div style={{ padding: "28px 36px", color: "rgba(255,255,255,0.95)" }}>
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-        <div style={{ opacity: 0.7, fontSize: 14, marginBottom: 8 }}>quiz results (teacher view)</div>
+        <div style={{ opacity: 0.7, fontSize: 14, marginBottom: 8 }}>
+          quiz results (teacher view)
+        </div>
 
         {/* Title + actions */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, margin: "14px 0 18px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            margin: "14px 0 18px",
+          }}
+        >
           <div style={{ fontSize: 40, fontWeight: 900 }}>{title}</div>
 
           <div style={{ display: "flex", gap: 12 }}>
@@ -177,7 +224,14 @@ export default function QuizResultTeacherPage() {
               border: "1px solid rgba(255,255,255,0.12)",
             }}
           >
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 14,
+                flexWrap: "wrap",
+                alignItems: "center",
+              }}
+            >
               {/* Class filter only when ALL mode */}
               {!isSingleClass && (
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -286,7 +340,9 @@ export default function QuizResultTeacherPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: isSingleClass ? "1fr 1fr 0.6fr 0.7fr" : "0.7fr 1fr 1fr 0.6fr 0.7fr",
+              gridTemplateColumns: isSingleClass
+                ? "1fr 1fr 0.6fr 0.7fr"
+                : "0.7fr 1fr 1fr 0.6fr 0.7fr",
               padding: "16px 18px",
               background: "rgba(85, 100, 170, 0.35)",
               fontWeight: 900,
@@ -306,7 +362,9 @@ export default function QuizResultTeacherPage() {
               key={r.id}
               style={{
                 display: "grid",
-                gridTemplateColumns: isSingleClass ? "1fr 1fr 0.6fr 0.7fr" : "0.7fr 1fr 1fr 0.6fr 0.7fr",
+                gridTemplateColumns: isSingleClass
+                  ? "1fr 1fr 0.6fr 0.7fr"
+                  : "0.7fr 1fr 1fr 0.6fr 0.7fr",
                 padding: "26px 18px",
                 borderTop: "1px solid rgba(255,255,255,0.08)",
                 fontSize: 20,
@@ -320,7 +378,9 @@ export default function QuizResultTeacherPage() {
             </div>
           ))}
 
-          {!rows.length && <div style={{ padding: 18, opacity: 0.8 }}>No results.</div>}
+          {!rows.length && (
+            <div style={{ padding: 18, opacity: 0.8 }}>No results.</div>
+          )}
         </div>
       </div>
     </div>

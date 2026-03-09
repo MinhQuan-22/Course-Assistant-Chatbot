@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { IconExport, IconFilter } from "../../components/teacher/icons";
 
@@ -7,7 +7,7 @@ type Row = {
   quizName: string;
   studentName: string;
   score: string; // "10/10"
-  date: string;  // "21.01.2025"
+  date: string; // "21.01.2025"
 };
 
 export default function QuizResultTeacherPage() {
@@ -15,18 +15,56 @@ export default function QuizResultTeacherPage() {
   const classCode = (params.classCode as string) || "21020105";
 
   const [openFilter, setOpenFilter] = useState(false);
-  const [quizFilter, setQuizFilter] = useState<"All" | "Quiz 1" | "Quiz 2">("All");
+  const [quizFilter, setQuizFilter] = useState<"All" | "Quiz 1" | "Quiz 2">(
+    "All",
+  );
 
   const rowsAll: Row[] = useMemo(
     () => [
-      { id: "r1", quizName: "Quiz 1", studentName: "Su Yi Phyo", score: "10/10", date: "21.01.2025" },
-      { id: "r2", quizName: "Quiz 1", studentName: "Su Yi Phyo", score: "10/10", date: "21.01.2025" },
-      { id: "r3", quizName: "Quiz 1", studentName: "Su Yi Phyo", score: "10/10", date: "21.01.2025" },
-      { id: "r4", quizName: "Quiz 1", studentName: "Su Yi Phyo", score: "10/10", date: "21.01.2025" },
-      { id: "r5", quizName: "Quiz 1", studentName: "Su Yi Phyo", score: "10/10", date: "21.01.2025" },
-      { id: "r6", quizName: "Quiz 1", studentName: "Su Yi Phyo", score: "10/10", date: "21.01.2025" },
+      {
+        id: "r1",
+        quizName: "Quiz 1",
+        studentName: "Su Yi Phyo",
+        score: "10/10",
+        date: "21.01.2025",
+      },
+      {
+        id: "r2",
+        quizName: "Quiz 1",
+        studentName: "Su Yi Phyo",
+        score: "10/10",
+        date: "21.01.2025",
+      },
+      {
+        id: "r3",
+        quizName: "Quiz 1",
+        studentName: "Su Yi Phyo",
+        score: "10/10",
+        date: "21.01.2025",
+      },
+      {
+        id: "r4",
+        quizName: "Quiz 1",
+        studentName: "Su Yi Phyo",
+        score: "10/10",
+        date: "21.01.2025",
+      },
+      {
+        id: "r5",
+        quizName: "Quiz 1",
+        studentName: "Su Yi Phyo",
+        score: "10/10",
+        date: "21.01.2025",
+      },
+      {
+        id: "r6",
+        quizName: "Quiz 1",
+        studentName: "Su Yi Phyo",
+        score: "10/10",
+        date: "21.01.2025",
+      },
     ],
-    []
+    [],
   );
 
   const rows = useMemo(() => {
@@ -36,8 +74,12 @@ export default function QuizResultTeacherPage() {
 
   const exportCSV = () => {
     const header = ["Quiz Name", "Student Name", "Score", "Date"];
-    const lines = [header.join(",")].concat(rows.map((r) => [r.quizName, r.studentName, r.score, r.date].join(",")));
-    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const lines = [header.join(",")].concat(
+      rows.map((r) => [r.quizName, r.studentName, r.score, r.date].join(",")),
+    );
+    const blob = new Blob([lines.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -50,7 +92,15 @@ export default function QuizResultTeacherPage() {
     <div style={{ padding: "28px 36px", color: "rgba(255,255,255,0.95)" }}>
       <div style={{ maxWidth: 1080, margin: "0 auto" }}>
         {/* Title + actions */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, margin: "14px 0 18px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            margin: "14px 0 18px",
+          }}
+        >
           <div style={{ fontSize: 40, fontWeight: 900 }}>
             Class Code - {classCode} (Quiz Results)
           </div>
@@ -179,7 +229,9 @@ export default function QuizResultTeacherPage() {
                 <div>{r.date}</div>
               </div>
             ))}
-            {!rows.length && <div style={{ padding: 18, opacity: 0.8 }}>No results.</div>}
+            {!rows.length && (
+              <div style={{ padding: 18, opacity: 0.8 }}>No results.</div>
+            )}
           </div>
         </div>
       </div>

@@ -1,5 +1,9 @@
-import React, { useMemo, useState } from "react";
-import { IconEdit, IconFilter, IconTrash } from "../../components/teacher/icons";
+import { useMemo, useState } from "react";
+import {
+  IconEdit,
+  IconFilter,
+  IconTrash,
+} from "../../components/teacher/icons";
 
 type Row = { id: string; name: string; type: string; date: string };
 
@@ -20,7 +24,9 @@ export default function FileListPage() {
     { id: "f6", name: "Chapter 1", type: "Lecture", date: "21.01.2025" },
   ]);
 
-  const [typeFilter, setTypeFilter] = useState<"All" | "Lecture" | "Assignment" | "Exam">("All");
+  const [typeFilter, setTypeFilter] = useState<
+    "All" | "Lecture" | "Assignment" | "Exam"
+  >("All");
 
   const filtered = useMemo(() => {
     if (typeFilter === "All") return rows;
@@ -31,8 +37,17 @@ export default function FileListPage() {
     <div style={{ padding: "34px 44px", color: "rgba(255,255,255,0.95)" }}>
       <div style={{ maxWidth: 980, margin: "0 auto" }}>
         {/* Title row */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-          <div style={{ fontSize: 34, fontWeight: 900, letterSpacing: 0.2 }}>Total Uploaded Files</div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 18,
+          }}
+        >
+          <div style={{ fontSize: 34, fontWeight: 900, letterSpacing: 0.2 }}>
+            Total Uploaded Files
+          </div>
 
           <button
             onClick={() => setFilterOpen((v) => !v)}
@@ -137,7 +152,13 @@ export default function FileListPage() {
                 <div style={{ opacity: 0.92 }}>{rowDate(r.date)}</div>
 
                 {/* actions */}
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 14 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: 14,
+                  }}
+                >
                   <button
                     onClick={() => alert(`Edit ${r.id} (mock)`)}
                     style={{
@@ -156,7 +177,9 @@ export default function FileListPage() {
                   </button>
 
                   <button
-                    onClick={() => setRows((prev) => prev.filter((x) => x.id !== r.id))}
+                    onClick={() =>
+                      setRows((prev) => prev.filter((x) => x.id !== r.id))
+                    }
                     style={{
                       width: 40,
                       height: 40,
