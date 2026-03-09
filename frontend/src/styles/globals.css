@@ -1,4 +1,4 @@
-/*src\styles\globals.css*/ 
+/*src\styles\globals.css*/
 /*for global styling*/
 :root {
   --text: rgba(255, 255, 255, 0.92);
@@ -8,7 +8,7 @@
   --bg1: #02051a;
 
   --panel: rgba(255, 255, 255, 0.08);
-  --panel2: rgba(255, 255, 255, 0.10);
+  --panel2: rgba(255, 255, 255, 0.1);
 
   --accent: #22b3d6;
 
@@ -21,10 +21,12 @@
 }
 
 html {
-  font-size: 14px; 
+  font-size: 14px;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
 }
 
@@ -75,7 +77,7 @@ a {
 }
 
 .login-content {
-  margin-left: 72px;                
+  margin-left: 72px;
   max-width: 520px;
 }
 
@@ -83,14 +85,14 @@ a {
   margin: 0;
   font-size: 60px;
   font-weight: 700;
-  color: rgba(255,255,255,0.95);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .login-sub {
   margin-top: 16px;
   font-size: 28px;
   line-height: 1.55;
-  color: rgba(255,255,255,0.70);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .login-cta {
@@ -133,7 +135,7 @@ a {
   font-weight: 500;
   cursor: pointer;
 
-  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
   transition: 0.2s ease;
 }
 
@@ -195,17 +197,17 @@ a {
 }
 
 .role-robot {
-  width: 110px;       
+  width: 110px;
   height: 210px;
   object-fit: contain;
-  transform: translateY(6px); 
+  transform: translateY(6px);
 }
 
 .role-title {
   margin: 0;
-  font-size: 38px;     
+  font-size: 38px;
   font-weight: 800;
-  color: rgba(255,255,255,0.95);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .role-actions {
@@ -216,7 +218,7 @@ a {
 }
 
 .role-btn {
-  width: 420px;      
+  width: 420px;
   height: 92px;
   border-radius: 22px;
 
@@ -226,10 +228,10 @@ a {
   background: #ffffff;
   color: #111827;
 
-  font-size: 34px;   
+  font-size: 34px;
   font-weight: 600;
 
-  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
 }
 
 .role-btn:hover {
@@ -281,29 +283,29 @@ a {
 .app-content {
   flex: 1;
   min-height: 0;
-  overflow: auto;   /* ONLY this scrolls */
+  overflow: auto; /* ONLY this scrolls */
 }
 
 /*teacher dashboard_sidebar.tsx*/
 .sidebar {
   width: 260px;
   height: 100vh;
-  padding: 26px 18px;                 
-  border-right: 1px solid rgba(255,255,255,0.08); 
+  padding: 26px 18px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 22px;                         
+  gap: 22px;
   overflow: hidden;
 }
 
-.side-nav {                           
+.side-nav {
   display: flex;
   flex-direction: column;
   gap: 14px;
   margin-top: 10px;
 }
 
-.side-item {                          
+.side-item {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -312,7 +314,7 @@ a {
   color: var(--muted);
 }
 
-.side-item .side-icon {              
+.side-item .side-icon {
   width: 34px;
   height: 34px;
   display: flex;
@@ -320,7 +322,7 @@ a {
   justify-content: center;
 }
 
-.icon-img {                           
+.icon-img {
   width: 35px;
   height: 35px;
   object-fit: contain;
@@ -339,20 +341,19 @@ a {
 }
 
 .side-item {
-  padding: 12px 12px;           
+  padding: 12px 12px;
   border-radius: 16px;
   font-size: 16px;
 }
 
 .side-item.active {
-  background: rgba(255,255,255,0.10);
+  background: rgba(255, 255, 255, 0.1);
   color: var(--text);
-  box-shadow: none;             
+  box-shadow: none;
 }
 
-
 .side-item:hover {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--text);
 }
 
@@ -381,23 +382,23 @@ a {
 .topbar {
   height: 76px;
   padding: 14px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  display: flex;                      
-  align-items: center;                
-  justify-content: space-between;    
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 14px;
 }
 
 .topbar-search {
   width: min(520px, 55vw);
-  display: flex;                      
-  align-items: center;                
-  gap: 12px;                          
+  display: flex;
+  align-items: center;
+  gap: 12px;
 
-  border: 1px solid rgba(255,255,255,0.35);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 999px;
   padding: 10px 14px;
-  background: rgba(0,0,0,0.12);
+  background: rgba(0, 0, 0, 0.12);
 }
 
 .topbar-search input {
@@ -409,7 +410,7 @@ a {
   font-size: 16px;
 }
 
-.topbar-icon {                        
+.topbar-icon {
   width: 26px;
   height: 26px;
   object-fit: contain;
@@ -451,7 +452,7 @@ a {
 }
 
 .tdash-kicker {
-  color: rgba(255,255,255,0.55);
+  color: rgba(255, 255, 255, 0.55);
   font-size: 13px;
   letter-spacing: 0.6px;
 }
@@ -463,7 +464,7 @@ a {
 }
 
 .tdash-sub {
-  color: rgba(255,255,255,0.65);
+  color: rgba(255, 255, 255, 0.65);
   font-size: 14px;
 }
 
@@ -475,12 +476,12 @@ a {
 }
 
 .tdash-pill {
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 999px;
   padding: 8px 12px;
   font-size: 13px;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .tdash-stats {
@@ -492,13 +493,13 @@ a {
 
 .tstat {
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
   padding: 14px 14px 12px;
 }
 
 .tstat-title {
-  color: rgba(255,255,255,0.65);
+  color: rgba(255, 255, 255, 0.65);
   font-size: 13px;
 }
 
@@ -513,7 +514,7 @@ a {
 .tstat-hint {
   margin-top: 8px;
   font-size: 12px;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .tdash-grid {
@@ -531,8 +532,8 @@ a {
 
 .tdash-card {
   border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
   padding: 14px;
 }
 
@@ -552,7 +553,7 @@ a {
 .tdash-card-sub {
   margin-top: 2px;
   font-size: 13px;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .tdash-card-actions {
@@ -564,9 +565,9 @@ a {
   width: 42px;
   height: 42px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.9);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 22px;
   cursor: pointer;
 }
@@ -587,15 +588,15 @@ a {
   height: 8px;
 }
 .tdash-carousel::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.18);
+  background: rgba(255, 255, 255, 0.18);
   border-radius: 999px;
 }
 
 .tclass {
   flex: 0 0 340px;
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.12);
   overflow: hidden;
 }
 
@@ -623,7 +624,7 @@ a {
 
 .tclass-code {
   font-size: 12px;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .tclass-meta {
@@ -631,19 +632,19 @@ a {
   display: flex;
   gap: 8px;
   font-size: 12px;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .tclass-track {
   margin-top: 10px;
   height: 8px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.16);
+  background: rgba(255, 255, 255, 0.16);
   overflow: hidden;
 }
 .tclass-fill {
   height: 100%;
-  background: rgba(34,179,214,0.9);
+  background: rgba(34, 179, 214, 0.9);
 }
 
 .tclass-actions {
@@ -656,18 +657,18 @@ a {
   height: 38px;
   padding: 0 14px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.18);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   background: transparent;
-  color: rgba(255,255,255,0.9);
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
   font-size: 13px;
 }
 .tbtn:hover {
-  background: rgba(255,255,255,0.10);
+  background: rgba(255, 255, 255, 0.1);
 }
 .tbtn-primary {
-  background: rgba(255,255,255,0.10);
-  border-color: rgba(255,255,255,0.10);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .tlist {
@@ -682,8 +683,8 @@ a {
   gap: 10px;
   padding: 10px;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .tstudent-avatar {
@@ -691,7 +692,7 @@ a {
   height: 42px;
   border-radius: 999px;
   object-fit: cover;
-  border: 1px solid rgba(255,255,255,0.20);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .tstudent-info {
@@ -705,7 +706,7 @@ a {
 .tstudent-sub {
   margin-top: 2px;
   font-size: 12px;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .tstudent-rank {
@@ -723,8 +724,8 @@ a {
 .tactivity-item {
   padding: 10px;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .tactivity-title {
@@ -735,13 +736,13 @@ a {
 .tactivity-meta {
   margin-top: 4px;
   font-size: 12px;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .tactivity-time {
   margin-top: 6px;
   font-size: 12px;
-  color: rgba(255,255,255,0.40);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 @media (max-width: 1200px) {
@@ -780,7 +781,6 @@ a {
   background: rgba(255, 255, 255, 0.18);
   border-radius: 999px;
 }
-
 
 .tdash-header {
   padding: 6px 4px 10px;
@@ -1201,12 +1201,12 @@ a {
 
 /* bigger send button + icon */
 .quiz-send {
-  width: 56px;      /* was 46 via .quiz-ico-btn */
+  width: 56px; /* was 46 via .quiz-ico-btn */
   height: 56px;
 }
 
 .quiz-send img {
-  width: 44px;      /* bigger icon */
+  width: 44px; /* bigger icon */
   height: 44px;
 }
 
@@ -1253,7 +1253,7 @@ a {
 .quiz-card {
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(120, 140, 220, 0.10);
+  background: rgba(120, 140, 220, 0.1);
   box-shadow: var(--shadow);
   padding: 16px;
 }
@@ -1268,7 +1268,6 @@ a {
 .quiz-avatar {
   width: 64x;
   height: 64px;
-
 }
 
 .quiz-header-title {
@@ -1301,7 +1300,7 @@ a {
   align-items: center;
   gap: 14px;
   font-size: 18px;
-  color: rgba(255, 255, 255, 0.90);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .quiz-option input {
@@ -1329,7 +1328,7 @@ a {
 }
 
 .quiz-btn-primary {
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.12);
 }
 
@@ -1341,3 +1340,322 @@ a {
   background: rgba(255, 255, 255, 0.12);
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
+.page {
+  padding: clamp(16px, 3vw, 36px);
+}
+
+.shell {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+}
+
+/* Card + button scale đồng bộ */
+.card {
+  border-radius: clamp(16px, 2.2vw, 26px);
+  padding: clamp(16px, 2.2vw, 26px);
+}
+
+.btn,
+.btnWhite {
+  height: clamp(44px, 6vw, 62px);
+  padding: 0 clamp(14px, 2vw, 18px);
+  border-radius: clamp(16px, 2.2vw, 22px);
+  font-size: clamp(14px, 2vw, 22px);
+}
+
+/* Không cho layout bị “tràn ngang” khi màn hẹp */
+* {
+  min-width: 0;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ===== Teacher layout (DashboardLayout) responsive ===== */
+@media (max-width: 980px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 14px 16px;
+  }
+
+  .side-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 0;
+  }
+
+  .side-item {
+    padding: 10px 12px;
+  }
+
+  .side-footer {
+    margin-top: 0;
+  }
+
+  .signout-btn {
+    width: auto;
+    padding: 10px 14px;
+    font-size: 16px;
+  }
+
+  .topbar {
+    height: auto;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .topbar-search {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* ===== Quiz pages (ChatSidebar + quiz-page) responsive ===== */
+@media (max-width: 980px) {
+  .quiz-page {
+    flex-direction: column;
+  }
+
+  .quiz-sidebar {
+    width: 100%;
+    min-height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 14px 16px;
+  }
+
+  .quiz-side-top {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .quiz-history {
+    display: none;
+  }
+
+  .quiz-signout {
+    display: none;
+  }
+
+  .quiz-main {
+    padding: 16px;
+  }
+}
+
+/* ===== Student Chat layout responsive ===== */
+@media (max-width: 980px) {
+  .chat-shell {
+    flex-direction: column;
+  }
+
+  .chat-sidebar {
+    width: 100%;
+    min-height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 14px 16px;
+  }
+
+  .chat-history {
+    display: none;
+  }
+
+  .chat-signout {
+    display: none;
+  }
+
+  .chat-topbar {
+    height: auto;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+}
+
+/* ===== Track Progress page ===== */
+.tp-topbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.tp-brand {
+  font-size: clamp(34px, 4vw, 48px);
+  font-weight: 700;
+  opacity: 0.95;
+  width: auto;
+}
+
+.tp-search {
+  flex: 1 1 320px;
+  height: clamp(46px, 6vw, 58px);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  min-width: 240px;
+  max-width: 680px;
+}
+
+.tp-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: white;
+  font-size: clamp(16px, 2vw, 22px);
+}
+
+.tp-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tp-iconBtn {
+  border: none;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  font-size: clamp(18px, 2.4vw, 26px);
+}
+
+.tp-avatarBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.tp-cards {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: 1.2fr 1.6fr 0.9fr;
+  gap: 20px;
+}
+
+.tp-chartMock {
+  width: min(240px, 35vw);
+  height: 76px;
+  opacity: 0.85;
+  display: grid;
+  place-items: center;
+  color: rgba(171, 140, 255, 0.95);
+}
+
+.tp-rankCard {
+  min-height: 130px;
+}
+
+.tp-rankTitle {
+  font-size: clamp(18px, 2vw, 22px);
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.tp-rankList {
+  display: grid;
+  gap: 12px;
+  font-size: clamp(14px, 2vw, 18px);
+}
+
+.tp-rankItem {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.tp-toolbar {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tp-tableCard {
+  margin-top: 14px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tp-tableWrap {
+  overflow: auto;
+}
+
+.tp-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px; /* giúp table không bị “ép” quá nhỏ */
+}
+
+.tp-table th,
+.tp-table td {
+  padding: 18px 22px;
+  text-align: left;
+  font-size: clamp(14px, 2vw, 22px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tp-table thead th {
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.tp-fab {
+  position: fixed;
+  right: clamp(18px, 4vw, 54px);
+  bottom: clamp(18px, 4vw, 54px);
+  width: clamp(110px, 18vw, 165px);
+  height: clamp(110px, 18vw, 165px);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow);
+}
+
+.tp-fabIcon {
+  font-size: clamp(28px, 4vw, 44px);
+}
+
+.tp-fabText {
+  margin-top: 6px;
+  font-size: clamp(12px, 1.6vw, 16px);
+  color: var(--muted);
+}
+
+/* stack cards khi màn nhỏ */
+@media (max-width: 1100px) {
+  .tp-cards {
+    grid-template-columns: 1fr;
+  }
+}
