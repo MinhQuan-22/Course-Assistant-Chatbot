@@ -1,5 +1,4 @@
-// src/pages/teacher/DashboardPage.tsx
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import manWithLaptop from "../../assets/manwithlaptop.jpg";
 
 type DemoClass = {
@@ -23,39 +22,61 @@ type ActivityItem = {
   time: string;
 };
 
+type DashboardData = {
+  summary: {
+    recent_uploads: number;
+    uploaded_files: number;
+    students: number;
+    quizzes: number;
+  };
+  classes: {
+    code: string;
+    name: string;
+    progress: number;
+    students: number;
+    img: string;
+  }[];
+  top_students: {
+    name: string;
+    score: number;
+    avatar: string;
+    class_code: string;
+  }[];
+  activity: {
+    title: string;
+    meta: string;
+    time: string;
+  }[];
+};
+
 export default function DashboardPage() {
-  const demoClasses: DemoClass[] = useMemo(
-    () => [
-      { code: "21020105", name: "Intro to Programming", progress: 0.55, students: 32, img: manWithLaptop },
-      { code: "21020106", name: "Web Fundamentals", progress: 0.65, students: 28, img: manWithLaptop },
-      { code: "21020107", name: "OOP Basics", progress: 0.35, students: 41, img: manWithLaptop },
-      { code: "21020108", name: "Data Structures", progress: 0.78, students: 25, img: manWithLaptop },
-    ],
-    [],
-  );
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const topStudents: TopStudent[] = useMemo(
-    () => [
-      { name: "Nguyen Van A", score: 95, avatar: "https://i.pravatar.cc/80?img=12", classCode: "21020105" },
-      { name: "Tran Thi B", score: 91, avatar: "https://i.pravatar.cc/80?img=32", classCode: "21020106" },
-      { name: "Le Van C", score: 88, avatar: "https://i.pravatar.cc/80?img=45", classCode: "21020107" },
-    ],
-    [],
-  );
-
-  const activity: ActivityItem[] = useMemo(
-    () => [
-      { title: "New upload added", meta: "Lecture_Week3.pdf • 21020105", time: "2h ago" },
-      { title: "Quiz submitted", meta: "Quiz 1 • 21020106", time: "5h ago" },
-      { title: "New student joined", meta: "21020107", time: "Yesterday" },
-    ],
-    [],
-  );
-
-  // Classes carousel scrolling
   const classesRef = useRef<HTMLDivElement | null>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/teacher/dashboard/");
+        if (!res.ok) {
+          throw new Error("Failed to fetch dashboard data");
+        }
+        const data: DashboardData = await res.json();
+        setDashboardData(data);
+      } catch (err) {
+        setError("Could not load dashboard data");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
 
   const updateArrows = () => {
     const el = classesRef.current;
@@ -87,11 +108,35 @@ export default function DashboardPage() {
       el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", updateArrows);
     };
-  }, []);
+  }, [dashboardData]);
+
+  if (loading) {
+    return <div>Loading dashboard...</div>;
+  }
+
+  if (error || !dashboardData) {
+    return <div>{error || "No data available"}</div>;
+  }
+
+  const demoClasses: DemoClass[] = dashboardData.classes.map((c) => ({
+    code: c.code,
+    name: c.name,
+    progress: c.progress,
+    students: c.students,
+    img: c.img || manWithLaptop,
+  }));
+
+  const topStudents: TopStudent[] = dashboardData.top_students.map((s) => ({
+    name: s.name,
+    score: s.score,
+    avatar: s.avatar,
+    classCode: s.class_code,
+  }));
+
+  const activity: ActivityItem[] = dashboardData.activity;
 
   return (
     <div className="tdash">
-      {/* Header (compact) */}
       <div className="tdash-header">
         <div>
           <div className="tdash-kicker">Teacher Dashboard</div>
@@ -105,15 +150,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Main grid (2 columns from the top) */}
       <div className="tdash-grid">
-        {/* LEFT column: stats + classes */}
         <div className="tdash-left">
           <div className="tdash-stats">
-            <TStat title="Recent uploads" value="12" hint="Last 7 days" />
-            <TStat title="Uploaded files" value="32" hint="Total" />
-            <TStat title="Students" value="126" hint="Across classes" />
-            <TStat title="Quizzes" value="8" hint="Created this month" />
+            <TStat title="Recent uploads" value={String(dashboardData.summary.recent_uploads)} hint="Last 7 days" />
+            <TStat title="Uploaded files" value={String(dashboardData.summary.uploaded_files)} hint="Total" />
+            <TStat title="Students" value={String(dashboardData.summary.students)} hint="Across classes" />
+            <TStat title="Quizzes" value={String(dashboardData.summary.quizzes)} hint="Created this month" />
           </div>
 
           <section className="tdash-card">
@@ -180,7 +223,6 @@ export default function DashboardPage() {
           </section>
         </div>
 
-        {/* RIGHT column: sticky top students + activity */}
         <aside className="tdash-right tdash-right-sticky">
           <section className="tdash-card">
             <div className="tdash-card-head">
