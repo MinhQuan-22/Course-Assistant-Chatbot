@@ -1,6 +1,89 @@
 BEGIN;
 
 -- =========================================================
+-- 0) prerequisites
+-- =========================================================
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================================
+-- 0.1) kiểm tra file_extension có phù hợp material_type không
+-- lecture_slide  -> ppt, pptx, pdf
+-- pdf_document   -> pdf
+-- docx_document  -> docx
+-- txt_document   -> txt
+-- =========================================================
+CREATE OR REPLACE FUNCTION ensure_document_version_extension_matches_material()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_material_type VARCHAR(30);
+  v_ext VARCHAR(10);
+BEGIN
+  SELECT material_type
+  INTO v_material_type
+  FROM documents
+  WHERE id = NEW.document_id;
+
+  IF v_material_type IS NULL THEN
+    RAISE EXCEPTION 'Document % does not exist or material_type is missing', NEW.document_id;
+  END IF;
+
+  v_ext := lower(NEW.file_extension);
+
+  IF v_material_type = 'lecture_slide' AND v_ext NOT IN ('ppt', 'pptx', 'pdf') THEN
+    RAISE EXCEPTION 'document_versions.file_extension % is invalid for material_type %', v_ext, v_material_type;
+  ELSIF v_material_type = 'pdf_document' AND v_ext <> 'pdf' THEN
+    RAISE EXCEPTION 'document_versions.file_extension % is invalid for material_type %', v_ext, v_material_type;
+  ELSIF v_material_type = 'docx_document' AND v_ext <> 'docx' THEN
+    RAISE EXCEPTION 'document_versions.file_extension % is invalid for material_type %', v_ext, v_material_type;
+  ELSIF v_material_type = 'txt_document' AND v_ext <> 'txt' THEN
+    RAISE EXCEPTION 'document_versions.file_extension % is invalid for material_type %', v_ext, v_material_type;
+  END IF;
+
+  NEW.file_extension := v_ext;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================================
+-- 0.2) kiểm tra consistency giữa subject/document/version ở chunks
+-- =========================================================
+CREATE OR REPLACE FUNCTION ensure_document_chunk_consistency()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_document_id UUID;
+  v_subject_id UUID;
+BEGIN
+  SELECT dv.document_id, d.subject_id
+  INTO v_document_id, v_subject_id
+  FROM document_versions dv
+  JOIN documents d ON d.id = dv.document_id
+  WHERE dv.id = NEW.document_version_id;
+
+  IF v_document_id IS NULL OR v_subject_id IS NULL THEN
+    RAISE EXCEPTION 'document_version_id % is invalid or has no linked document/subject', NEW.document_version_id;
+  END IF;
+
+  IF NEW.document_id <> v_document_id THEN
+    RAISE EXCEPTION 'document_chunks.document_id % does not match document_versions.document_id %', NEW.document_id, v_document_id;
+  END IF;
+
+  IF NEW.subject_id <> v_subject_id THEN
+    RAISE EXCEPTION 'document_chunks.subject_id % does not match documents.subject_id %', NEW.subject_id, v_subject_id;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================================
 -- 1) documents
 -- =========================================================
 CREATE TABLE IF NOT EXISTS documents (
@@ -10,8 +93,8 @@ CREATE TABLE IF NOT EXISTS documents (
   uploaded_by_user_id UUID NOT NULL,
   title VARCHAR(255) NOT NULL,
   material_type VARCHAR(30) NOT NULL,
-  source_label VARCHAR(100) NULL,
-  status VARCHAR(20) NOT NULL DEFAULT 'draft',
+  source_label VARCHAR(255) NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'active',
   current_version_no INT NOT NULL DEFAULT 1,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -34,10 +117,9 @@ CREATE TABLE IF NOT EXISTS documents (
   CONSTRAINT ck_documents_status
     CHECK (status IN (
       'draft',
-      'processing',
-      'ready',
+      'active',
       'archived',
-      'failed'
+      'deleted'
     )),
 
   CONSTRAINT ck_documents_current_version_no
@@ -47,11 +129,11 @@ CREATE TABLE IF NOT EXISTS documents (
 CREATE INDEX IF NOT EXISTS idx_documents_subject_id
 ON documents(subject_id);
 
+CREATE INDEX IF NOT EXISTS idx_documents_subject_is_active
+ON documents(subject_id, is_active);
+
 CREATE INDEX IF NOT EXISTS idx_documents_uploaded_by_user_id
 ON documents(uploaded_by_user_id);
-
-CREATE INDEX IF NOT EXISTS idx_documents_is_active
-ON documents(is_active);
 
 -- =========================================================
 -- 2) document_versions
@@ -61,11 +143,11 @@ CREATE TABLE IF NOT EXISTS document_versions (
   document_id UUID NOT NULL,
   version_no INT NOT NULL,
   original_file_name VARCHAR(255) NOT NULL,
-  file_extension VARCHAR(20) NOT NULL,
-  mime_type VARCHAR(100) NULL,
+  file_extension VARCHAR(10) NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
   storage_path TEXT NOT NULL,
-  file_size_bytes BIGINT NOT NULL DEFAULT 0,
-  file_checksum_sha256 VARCHAR(64) NOT NULL,
+  file_size_bytes BIGINT NOT NULL,
+  file_checksum_sha256 VARCHAR(128) NOT NULL,
   page_count INT NULL,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   uploaded_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -81,6 +163,9 @@ CREATE TABLE IF NOT EXISTS document_versions (
   CONSTRAINT ck_document_versions_version_no
     CHECK (version_no > 0),
 
+  CONSTRAINT ck_document_versions_file_extension
+    CHECK (file_extension IN ('pdf', 'docx', 'txt', 'ppt', 'pptx')),
+
   CONSTRAINT ck_document_versions_file_size
     CHECK (file_size_bytes >= 0),
 
@@ -91,8 +176,8 @@ CREATE TABLE IF NOT EXISTS document_versions (
 CREATE INDEX IF NOT EXISTS idx_document_versions_document_id
 ON document_versions(document_id);
 
-CREATE INDEX IF NOT EXISTS idx_document_versions_is_active
-ON document_versions(is_active);
+CREATE INDEX IF NOT EXISTS idx_document_versions_document_is_active
+ON document_versions(document_id, is_active);
 
 CREATE INDEX IF NOT EXISTS idx_document_versions_checksum
 ON document_versions(file_checksum_sha256);
@@ -103,13 +188,15 @@ ON document_versions(file_checksum_sha256);
 CREATE TABLE IF NOT EXISTS ingestion_jobs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   document_version_id UUID NOT NULL,
-  job_type VARCHAR(20) NOT NULL,
+  job_type VARCHAR(30) NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'pending',
   started_at TIMESTAMPTZ NULL,
   finished_at TIMESTAMPTZ NULL,
-  error_message TEXT NULL,
   total_chunks INT NOT NULL DEFAULT 0,
-  processed_chunks INT NOT NULL DEFAULT 0,
+  embedded_chunks INT NOT NULL DEFAULT 0,
+  error_message TEXT NULL,
+  parser_name VARCHAR(100) NULL,
+  embedding_model VARCHAR(100) NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
@@ -136,11 +223,11 @@ CREATE TABLE IF NOT EXISTS ingestion_jobs (
   CONSTRAINT ck_ingestion_jobs_total_chunks
     CHECK (total_chunks >= 0),
 
-  CONSTRAINT ck_ingestion_jobs_processed_chunks
-    CHECK (processed_chunks >= 0),
+  CONSTRAINT ck_ingestion_jobs_embedded_chunks
+    CHECK (embedded_chunks >= 0),
 
   CONSTRAINT ck_ingestion_jobs_chunk_progress
-    CHECK (processed_chunks <= total_chunks),
+    CHECK (embedded_chunks <= total_chunks),
 
   CONSTRAINT ck_ingestion_jobs_time_range
     CHECK (
@@ -153,11 +240,8 @@ CREATE TABLE IF NOT EXISTS ingestion_jobs (
 CREATE INDEX IF NOT EXISTS idx_ingestion_jobs_document_version_id
 ON ingestion_jobs(document_version_id);
 
-CREATE INDEX IF NOT EXISTS idx_ingestion_jobs_status
-ON ingestion_jobs(status);
-
-CREATE INDEX IF NOT EXISTS idx_ingestion_jobs_job_type
-ON ingestion_jobs(job_type);
+CREATE INDEX IF NOT EXISTS idx_ingestion_jobs_document_version_status
+ON ingestion_jobs(document_version_id, status);
 
 -- =========================================================
 -- 4) document_chunks
@@ -170,10 +254,10 @@ CREATE TABLE IF NOT EXISTS document_chunks (
   page_number INT NULL,
   chunk_index INT NOT NULL,
   chunk_text TEXT NOT NULL,
-  chunk_checksum_sha256 VARCHAR(64) NOT NULL,
+  chunk_text_checksum VARCHAR(128) NOT NULL,
   token_count INT NULL,
-  character_count INT NOT NULL DEFAULT 0,
-  heading_path TEXT NULL,
+  char_count INT NULL,
+  heading_path VARCHAR(500) NULL,
   section_label VARCHAR(255) NULL,
   chroma_id VARCHAR(255) NULL UNIQUE,
   embedding_model VARCHAR(100) NULL,
@@ -190,9 +274,6 @@ CREATE TABLE IF NOT EXISTS document_chunks (
   CONSTRAINT fk_document_chunks_document_version
     FOREIGN KEY (document_version_id) REFERENCES document_versions(id),
 
-  CONSTRAINT uq_document_chunks_version_page_chunk
-    UNIQUE (document_version_id, page_number, chunk_index),
-
   CONSTRAINT ck_document_chunks_chunk_index
     CHECK (chunk_index >= 0),
 
@@ -202,21 +283,20 @@ CREATE TABLE IF NOT EXISTS document_chunks (
   CONSTRAINT ck_document_chunks_token_count
     CHECK (token_count IS NULL OR token_count >= 0),
 
-  CONSTRAINT ck_document_chunks_character_count
-    CHECK (character_count >= 0)
+  CONSTRAINT ck_document_chunks_char_count
+    CHECK (char_count IS NULL OR char_count >= 0)
 );
 
-CREATE INDEX IF NOT EXISTS idx_document_chunks_subject_id
-ON document_chunks(subject_id);
+-- Với TXT, page_number có thể 0 hoặc NULL theo tài liệu.
+-- Để chống trùng tốt hơn cả 2 trường hợp, dùng unique index với COALESCE(page_number, 0)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_document_chunks_version_page_chunk
+ON document_chunks(document_version_id, COALESCE(page_number, 0), chunk_index);
 
-CREATE INDEX IF NOT EXISTS idx_document_chunks_document_id
-ON document_chunks(document_id);
+CREATE INDEX IF NOT EXISTS idx_document_chunks_subject_document_version
+ON document_chunks(subject_id, document_id, document_version_id);
 
-CREATE INDEX IF NOT EXISTS idx_document_chunks_document_version_id
-ON document_chunks(document_version_id);
-
-CREATE INDEX IF NOT EXISTS idx_document_chunks_is_active
-ON document_chunks(is_active);
+CREATE INDEX IF NOT EXISTS idx_document_chunks_version_is_active
+ON document_chunks(document_version_id, is_active);
 
 CREATE INDEX IF NOT EXISTS idx_document_chunks_chroma_id
 ON document_chunks(chroma_id);
@@ -243,5 +323,20 @@ DROP TRIGGER IF EXISTS trg_document_chunks_set_updated_at ON document_chunks;
 CREATE TRIGGER trg_document_chunks_set_updated_at
 BEFORE UPDATE ON document_chunks
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- =========================================================
+-- 6) business-rule triggers
+-- =========================================================
+DROP TRIGGER IF EXISTS trg_document_versions_check_material_extension ON document_versions;
+CREATE TRIGGER trg_document_versions_check_material_extension
+BEFORE INSERT OR UPDATE OF document_id, file_extension
+ON document_versions
+FOR EACH ROW EXECUTE FUNCTION ensure_document_version_extension_matches_material();
+
+DROP TRIGGER IF EXISTS trg_document_chunks_check_consistency ON document_chunks;
+CREATE TRIGGER trg_document_chunks_check_consistency
+BEFORE INSERT OR UPDATE OF subject_id, document_id, document_version_id
+ON document_chunks
+FOR EACH ROW EXECUTE FUNCTION ensure_document_chunk_consistency();
 
 COMMIT;
