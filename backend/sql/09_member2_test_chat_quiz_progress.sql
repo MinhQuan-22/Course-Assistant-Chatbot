@@ -102,7 +102,7 @@ CREATE TEMP TABLE IF NOT EXISTS negative_test_results (
   test_name TEXT NOT NULL,
   expected_error TEXT NOT NULL,
   actual_result TEXT NOT NULL
-) ON COMMIT DROP;
+);
 
 -- 6.1 chat_sessions: subject_id phải khớp class_section.subject_id
 DO $$

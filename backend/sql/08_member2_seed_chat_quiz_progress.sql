@@ -96,9 +96,9 @@ SELECT
   x.relevance_score
 FROM (
   VALUES
-    ('What is programming?', 1, 'DOC003', 5, 0, 0.9632),
-    ('What is programming?', 1, 'DOC001', 1, 0, 0.9110)
-) AS x(session_title, message_index, document_code, page_number, chunk_index, relevance_score)
+    ('What is programming?', 1, 'DOC003', 5, 0, 1, 0.9632),
+    ('What is programming?', 1, 'DOC001', 1, 0, 2, 0.9110)
+) AS x(session_title, message_index, document_code, page_number, chunk_index, rank_no, relevance_score)
 JOIN chat_sessions cs ON cs.title = x.session_title
 JOIN chat_messages cm
   ON cm.chat_session_id = cs.id
