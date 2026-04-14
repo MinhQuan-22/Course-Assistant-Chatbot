@@ -1,17 +1,17 @@
 import json
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-from .models import Conversation, Message
 import os
+import threading
+
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
+from django.http import JsonResponse
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from .models import Document
+
+from .auth_utils import check_password, create_jwt_token, decode_jwt_token, hash_password
+from .models import Conversation, Document, Message, User
 from .services.document_ingestion import ingest_document
-import threading
-from .models import User
-from .auth_utils import check_password, create_jwt_token, hash_password, decode_jwt_token
 from .services.rag_service import generate_answer
 
 
@@ -29,7 +29,10 @@ def register_user(request):
         role = body.get("role", "student").strip()
 
         if not name or not email or not password:
-            return JsonResponse({"error": "Name, email, and password are required"}, status=400)
+            return JsonResponse(
+                {"error": "Name, email, and password are required"},
+                status=400,
+            )
 
         if role not in ["student", "teacher", "admin"]:
             return JsonResponse({"error": "Invalid role"}, status=400)
@@ -49,16 +52,19 @@ def register_user(request):
             is_active=True,
         )
 
-        return JsonResponse({
-            "message": "User registered successfully",
-            "user": {
-                "id": user.id,
-                "name": user.name,
-                "username": user.username,
-                "email": user.email,
-                "role": user.role,
-            }
-        }, status=201)
+        return JsonResponse(
+            {
+                "message": "User registered successfully",
+                "user": {
+                    "id": user.id,
+                    "name": user.name,
+                    "username": user.username,
+                    "email": user.email,
+                    "role": user.role,
+                },
+            },
+            status=201,
+        )
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
@@ -71,11 +77,14 @@ def login_user(request):
 
     try:
         body = json.loads(request.body)
-        identifier = body.get("identifier", "").strip()   # email or username
+        identifier = body.get("identifier", "").strip()
         password = body.get("password", "").strip()
 
         if not identifier or not password:
-            return JsonResponse({"error": "Identifier and password are required"}, status=400)
+            return JsonResponse(
+                {"error": "Identifier and password are required"},
+                status=400,
+            )
 
         user = User.objects.filter(email=identifier).first()
         if not user:
@@ -95,17 +104,20 @@ def login_user(request):
 
         token = create_jwt_token(user)
 
-        return JsonResponse({
-            "message": "Login successful",
-            "token": token,
-            "user": {
-                "id": user.id,
-                "name": user.name,
-                "username": user.username,
-                "email": user.email,
-                "role": user.role,
-            }
-        }, status=200)
+        return JsonResponse(
+            {
+                "message": "Login successful",
+                "token": token,
+                "user": {
+                    "id": user.id,
+                    "name": user.name,
+                    "username": user.username,
+                    "email": user.email,
+                    "role": user.role,
+                },
+            },
+            status=200,
+        )
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
@@ -127,16 +139,19 @@ def get_me(request):
     if not user:
         return JsonResponse({"error": "User not found"}, status=404)
 
-    return JsonResponse({
-        "user": {
-            "id": user.id,
-            "name": user.name,
-            "username": user.username,
-            "email": user.email,
-            "role": user.role,
-            "is_active": user.is_active,
-        }
-    }, status=200)
+    return JsonResponse(
+        {
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role,
+                "is_active": user.is_active,
+            }
+        },
+        status=200,
+    )
 
 
 def get_users(request):
@@ -144,12 +159,14 @@ def get_users(request):
 
     data = []
     for user in users:
-        data.append({
-            "id": user.id,
-            "name": user.name,
-            "email": user.email,
-            "role": user.role,
-        })
+        data.append(
+            {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "role": user.role,
+            }
+        )
 
     return JsonResponse(data, safe=False)
 
@@ -166,28 +183,32 @@ def send_chat_message(request):
         content = body.get("content", "").strip()
 
         if not user_id or not content:
-            return JsonResponse({"error": "user_id and content are required"}, status=400)
+            return JsonResponse(
+                {"error": "user_id and content are required"},
+                status=400,
+            )
 
         user = User.objects.filter(id=user_id).first()
         if not user:
             return JsonResponse({"error": "User not found"}, status=404)
 
-        conversation = None
+        if user.role != "student":
+            return JsonResponse({"error": "Only students can use chat"}, status=403)
 
+        conversation = None
         if conversation_id:
             conversation = Conversation.objects.filter(id=conversation_id, user=user).first()
 
         if not conversation:
-            title = content[:60]
             conversation = Conversation.objects.create(
                 user=user,
-                title=title
+                title=content[:60],
             )
 
         user_message = Message.objects.create(
             conversation=conversation,
             role="user",
-            content=content
+            content=content,
         )
 
         rag_result = generate_answer(content)
@@ -196,29 +217,32 @@ def send_chat_message(request):
             conversation=conversation,
             role="assistant",
             content=rag_result["answer"],
-            sources_json=rag_result["sources"]
+            sources_json=rag_result["sources"],
         )
 
         conversation.updated_at = timezone.now()
         conversation.save(update_fields=["updated_at"])
 
-        return JsonResponse({
-            "message": "Chat message processed successfully",
-            "conversation_id": conversation.id,
-            "user_message": {
-                "id": user_message.id,
-                "role": user_message.role,
-                "content": user_message.content,
-                "created_at": user_message.created_at.isoformat(),
+        return JsonResponse(
+            {
+                "message": "Chat message processed successfully",
+                "conversation_id": conversation.id,
+                "user_message": {
+                    "id": user_message.id,
+                    "role": user_message.role,
+                    "content": user_message.content,
+                    "created_at": user_message.created_at.isoformat(),
+                },
+                "assistant_message": {
+                    "id": assistant_message.id,
+                    "role": assistant_message.role,
+                    "content": assistant_message.content,
+                    "sources_json": assistant_message.sources_json,
+                    "created_at": assistant_message.created_at.isoformat(),
+                },
             },
-            "assistant_message": {
-                "id": assistant_message.id,
-                "role": assistant_message.role,
-                "content": assistant_message.content,
-                "sources_json": assistant_message.sources_json,
-                "created_at": assistant_message.created_at.isoformat(),
-            }
-        }, status=200)
+            status=200,
+        )
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
@@ -231,6 +255,16 @@ def get_conversations(request):
         return JsonResponse({"error": "user_id is required"}, status=400)
 
     try:
+        user = User.objects.filter(id=user_id).first()
+        if not user:
+            return JsonResponse({"error": "User not found"}, status=404)
+
+        if user.role != "student":
+            return JsonResponse(
+                {"error": "Only students can access chat history"},
+                status=403,
+            )
+
         conversations = Conversation.objects.filter(user_id=user_id).order_by("-updated_at")
 
         data = []
@@ -238,14 +272,16 @@ def get_conversations(request):
             last_message = Message.objects.filter(conversation=conv).order_by("-created_at").first()
             message_count = Message.objects.filter(conversation=conv).count()
 
-            data.append({
-                "id": conv.id,
-                "title": conv.title,
-                "user_id": conv.user_id,
-                "last_message": last_message.content if last_message else "",
-                "updated_at": conv.updated_at.isoformat() if conv.updated_at else None,
-                "message_count": message_count,
-            })
+            data.append(
+                {
+                    "id": conv.id,
+                    "title": conv.title,
+                    "user_id": conv.user_id,
+                    "last_message": last_message.content if last_message else "",
+                    "updated_at": conv.updated_at.isoformat() if conv.updated_at else None,
+                    "message_count": message_count,
+                }
+            )
 
         return JsonResponse(data, safe=False, status=200)
 
@@ -260,6 +296,9 @@ def get_conversation_messages(request, conversation_id):
         if not conversation:
             return JsonResponse({"error": "Conversation not found"}, status=404)
 
+        if conversation.user.role != "student":
+            return JsonResponse({"error": "Access denied"}, status=403)
+
         messages = Message.objects.filter(conversation=conversation).order_by("created_at")
 
         data = {
@@ -270,23 +309,25 @@ def get_conversation_messages(request, conversation_id):
                 "created_at": conversation.created_at.isoformat() if conversation.created_at else None,
                 "updated_at": conversation.updated_at.isoformat() if conversation.updated_at else None,
             },
-            "messages": []
+            "messages": [],
         }
 
         for msg in messages:
-            data["messages"].append({
-                "id": msg.id,
-                "role": msg.role,
-                "content": msg.content,
-                "sources_json": msg.sources_json,
-                "created_at": msg.created_at.isoformat() if msg.created_at else None,
-            })
+            data["messages"].append(
+                {
+                    "id": msg.id,
+                    "role": msg.role,
+                    "content": msg.content,
+                    "sources_json": msg.sources_json,
+                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
+                }
+            )
 
         return JsonResponse(data, status=200)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-    
+
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -296,21 +337,24 @@ def get_documents(request):
 
         data = []
         for doc in documents:
-            data.append({
-                "id": doc.id,
-                "name": doc.name,
-                "file_path": doc.file_path,
-                "file_type": doc.file_type,
-                "file_size": doc.file_size,
-                "uploaded_by": doc.uploaded_by_id,
-                "status": doc.status,
-                "uploaded_at": doc.uploaded_at.isoformat() if doc.uploaded_at else None,
-            })
+            data.append(
+                {
+                    "id": doc.id,
+                    "name": doc.name,
+                    "file_path": doc.file_path,
+                    "file_type": doc.file_type,
+                    "file_size": doc.file_size,
+                    "uploaded_by": doc.uploaded_by_id,
+                    "status": doc.status,
+                    "uploaded_at": doc.uploaded_at.isoformat() if doc.uploaded_at else None,
+                }
+            )
 
         return JsonResponse(data, safe=False, status=200)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
 
 def process_document_ingestion(document_id):
     try:
@@ -332,6 +376,7 @@ def process_document_ingestion(document_id):
 
         print(f"Ingestion error for document {document_id}: {str(ingest_error)}")
 
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def upload_document(request):
@@ -348,6 +393,12 @@ def upload_document(request):
         user = User.objects.filter(id=uploaded_by).first()
         if not user:
             return JsonResponse({"error": "Uploader not found"}, status=404)
+
+        if user.role not in ["teacher", "admin"]:
+            return JsonResponse(
+                {"error": "Only teachers or admins can upload documents"},
+                status=403,
+            )
 
         os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
 
@@ -373,19 +424,22 @@ def upload_document(request):
         )
         thread.start()
 
-        return JsonResponse({
-            "message": "Document uploaded successfully. Processing started.",
-            "document": {
-                "id": document.id,
-                "name": document.name,
-                "file_path": document.file_path,
-                "file_type": document.file_type,
-                "file_size": document.file_size,
-                "uploaded_by": document.uploaded_by_id,
-                "status": document.status,
-                "uploaded_at": document.uploaded_at.isoformat() if document.uploaded_at else None,
-            }
-        }, status=201)
+        return JsonResponse(
+            {
+                "message": "Document uploaded successfully. Processing started.",
+                "document": {
+                    "id": document.id,
+                    "name": document.name,
+                    "file_path": document.file_path,
+                    "file_type": document.file_type,
+                    "file_size": document.file_size,
+                    "uploaded_by": document.uploaded_by_id,
+                    "status": document.status,
+                    "uploaded_at": document.uploaded_at.isoformat() if document.uploaded_at else None,
+                },
+            },
+            status=201,
+        )
 
     except Exception as e:
         print("Upload error:", str(e))
