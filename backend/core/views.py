@@ -1,6 +1,10 @@
 import json
 import os
 import threading
+import secrets
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
@@ -70,6 +74,52 @@ def register_user(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+def serialize_user(user):
+    return {
+        "id": user.id,
+        "name": user.name,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "avatar": user.avatar,
+        "is_active": user.is_active,
+    }
+
+
+def get_authenticated_user(request):
+    auth_header = request.headers.get("Authorization", "")
+
+    if not auth_header.startswith("Bearer "):
+        return None, JsonResponse({"error": "Authorization token required"}, status=401)
+
+    token = auth_header.split(" ", 1)[1]
+    payload = decode_jwt_token(token)
+
+    if not payload:
+        return None, JsonResponse({"error": "Invalid or expired token"}, status=401)
+
+    user = User.objects.filter(id=payload["user_id"]).first()
+    if not user:
+        return None, JsonResponse({"error": "User not found"}, status=404)
+
+    return user, None
+
+
+def build_unique_username(base: str) -> str:
+    cleaned = "".join(ch for ch in (base or "").lower() if ch.isalnum())
+    if not cleaned:
+        cleaned = "user"
+
+    username = cleaned[:50]
+    counter = 1
+
+    while User.objects.filter(username=username).exists():
+        suffix = str(counter)
+        username = f"{cleaned[:50 - len(suffix)]}{suffix}"
+        counter += 1
+
+    return username
+
 @csrf_exempt
 def login_user(request):
     if request.method != "POST":
@@ -122,6 +172,96 @@ def login_user(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+
+@csrf_exempt
+def google_login(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    if not settings.GOOGLE_CLIENT_ID:
+        return JsonResponse({"error": "GOOGLE_CLIENT_ID is not configured"}, status=500)
+
+    try:
+        body = json.loads(request.body)
+        credential = body.get("credential", "").strip()
+
+        if not credential:
+            return JsonResponse({"error": "Google credential is required"}, status=400)
+
+        try:
+            google_user = id_token.verify_oauth2_token(
+                credential,
+                google_requests.Request(),
+                settings.GOOGLE_CLIENT_ID,
+            )
+        except Exception:
+            return JsonResponse({"error": "Invalid Google token"}, status=401)
+
+        email = (google_user.get("email") or "").strip().lower()
+        google_id = (google_user.get("sub") or "").strip()
+        name = (google_user.get("name") or "").strip() or email.split("@")[0]
+        avatar = google_user.get("picture") or None
+        email_verified = google_user.get("email_verified", False)
+
+        if not email or not google_id:
+            return JsonResponse({"error": "Google account data is incomplete"}, status=400)
+
+        if not email_verified:
+            return JsonResponse({"error": "Google email is not verified"}, status=400)
+
+        user = User.objects.filter(google_id=google_id).first()
+        if not user:
+            user = User.objects.filter(email=email).first()
+
+        if user:
+            if not user.is_active:
+                return JsonResponse({"error": "Account is inactive"}, status=403)
+
+            update_fields = []
+
+            if not user.google_id:
+                user.google_id = google_id
+                update_fields.append("google_id")
+
+            if avatar and user.avatar != avatar:
+                user.avatar = avatar
+                update_fields.append("avatar")
+
+            if not user.username:
+                user.username = build_unique_username(email.split("@")[0])
+                update_fields.append("username")
+
+            user.last_login = timezone.now()
+            update_fields.append("last_login")
+
+            user.save(update_fields=update_fields)
+        else:
+            user = User.objects.create(
+                name=name,
+                username=build_unique_username(email.split("@")[0]),
+                email=email,
+                password=hash_password(secrets.token_urlsafe(24)),
+                google_id=google_id,
+                role="student",
+                is_active=True,
+                avatar=avatar,
+            )
+            user.last_login = timezone.now()
+            user.save(update_fields=["last_login"])
+
+        token = create_jwt_token(user)
+
+        return JsonResponse(
+            {
+                "message": "Google login successful",
+                "token": token,
+                "user": serialize_user(user),
+            },
+            status=200,
+        )
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 def get_me(request):
     auth_header = request.headers.get("Authorization", "")
@@ -249,23 +389,18 @@ def send_chat_message(request):
 
 
 def get_conversations(request):
-    user_id = request.GET.get("user_id")
-
-    if not user_id:
-        return JsonResponse({"error": "user_id is required"}, status=400)
+    user, error_response = get_authenticated_user(request)
+    if error_response:
+        return error_response
 
     try:
-        user = User.objects.filter(id=user_id).first()
-        if not user:
-            return JsonResponse({"error": "User not found"}, status=404)
-
         if user.role != "student":
             return JsonResponse(
                 {"error": "Only students can access chat history"},
                 status=403,
             )
 
-        conversations = Conversation.objects.filter(user_id=user_id).order_by("-updated_at")
+        conversations = Conversation.objects.filter(user=user).order_by("-updated_at")
 
         data = []
         for conv in conversations:
@@ -275,8 +410,7 @@ def get_conversations(request):
             data.append(
                 {
                     "id": conv.id,
-                    "title": conv.title,
-                    "user_id": conv.user_id,
+                    "title": conv.title or "Untitled conversation",
                     "last_message": last_message.content if last_message else "",
                     "updated_at": conv.updated_at.isoformat() if conv.updated_at else None,
                     "message_count": message_count,
@@ -287,7 +421,6 @@ def get_conversations(request):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-
 
 def get_conversation_messages(request, conversation_id):
     try:
