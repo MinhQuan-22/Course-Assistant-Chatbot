@@ -15,5 +15,15 @@ services:
       - ./db/schema.sql:/docker-entrypoint-initdb.d/1_schema.sql
       - ./db/seed.sql:/docker-entrypoint-initdb.d/2_seed.sql
 
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: course_assistant_chromadb
+    restart: always
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+
 volumes:
   mysql_data:
+  chroma_data:
