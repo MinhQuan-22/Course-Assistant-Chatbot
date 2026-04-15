@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, LogIn } from 'lucide-react';
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const [identifier, setIdentifier] = useState('');
@@ -24,7 +24,13 @@ export default function LoginPage() {
     }
 
     const parsedUser = JSON.parse(savedUser);
-    navigate(parsedUser.role === 'admin' ? '/admin' : '/chat');
+    if (parsedUser.role === 'admin') {
+      navigate('/admin');
+    } else if (parsedUser.role === 'teacher') {
+      navigate('/documents');
+    } else {
+      navigate('/chat');
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -33,7 +39,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     const result = await login({ identifier, password });
-              
+
     setIsSubmitting(false);
 
     if (!result.success) {
@@ -54,7 +60,7 @@ export default function LoginPage() {
 
     setIsSubmitting(true);
 
-    const result = await login({ identifier: credentialResponse.credential, password: '' });
+    const result = await loginWithGoogle(credentialResponse.credential);
 
     setIsSubmitting(false);
 

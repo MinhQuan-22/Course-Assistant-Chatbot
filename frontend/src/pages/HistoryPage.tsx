@@ -24,32 +24,39 @@ export default function HistoryPage() {
   const user = savedUser ? JSON.parse(savedUser) : null;
 
   useEffect(() => {
-    const fetchConversations = async () => {
-      if (!user?.id) {
-        setIsLoading(false);
-        return;
-      }
+  const fetchConversations = async () => {
+    const token = localStorage.getItem('token');
 
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/chat/conversations/?user_id=${user.id}`
-        );
-        const data = await response.json();
+    if (!user?.id || !token) {
+      setIsLoading(false);
+      return;
+    }
 
-        if (response.ok) {
-          setConversations(data);
-        } else {
-          setConversations([]);
-        }
-      } catch (error) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat/conversations/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setConversations(data);
+      } else {
+        console.error('History error:', data);
         setConversations([]);
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('History fetch failed:', error);
+      setConversations([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchConversations();
-  }, [user?.id]);
+  fetchConversations();
+}, [user?.id]);
 
   const handleOpenConversation = (conversationId: number) => {
     navigate(`/chat?conversation_id=${conversationId}`);

@@ -58,3 +58,11 @@ yarn-error.log*
 # Misc
 # ======================
 coverage/
+
+# Environment variables
+.env
+.env.*
+
+# Uploaded documents
+media/
+uploads/

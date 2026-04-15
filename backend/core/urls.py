@@ -1,10 +1,10 @@
 from django.urls import path
 from .views import (
-    get_users,
     register_user,
     login_user,
     google_login,
     get_me,
+    get_users,
     send_chat_message,
     get_conversations,
     get_conversation_messages,
@@ -13,11 +13,12 @@ from .views import (
 )
 
 urlpatterns = [
-    path('users/', get_users),
     path('auth/register/', register_user),
     path('auth/login/', login_user),
     path('auth/google/', google_login),
     path('auth/me/', get_me),
+
+    path('users/', get_users),
 
     path('chat/send/', send_chat_message),
     path('chat/conversations/', get_conversations),
