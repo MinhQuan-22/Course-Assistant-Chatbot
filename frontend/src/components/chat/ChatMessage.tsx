@@ -41,10 +41,11 @@ export function ChatMessageBubble({ message }: Props) {
         {message.sources && message.sources.length > 0 && (
           <div className="space-y-1">
             {message.sources.map((source: any, i: number) => {
-              const documentName = source.documentName || source.document_name || 'Unknown document';
+              const documentName =
+                source.documentName || source.document_name || 'Unknown document';
+
               const page = source.page;
               const chunkIndex = source.chunk_index;
-              const snippet = source.snippet;
 
               return (
                 <div
@@ -54,15 +55,8 @@ export function ChatMessageBubble({ message }: Props) {
                   <FileText className="w-3 h-3 mt-0.5 shrink-0" />
                   <span>
                     <strong>{documentName}</strong>
-                    {page !== undefined && page !== null ? (
-                      <> — Page {page}</>
-                    ) : chunkIndex !== undefined && chunkIndex !== null ? (
-                      <> — Chunk {chunkIndex}</>
-                    ) : null}
-
-                    {snippet && (
-                      <span className="block mt-0.5 italic">"{snippet}"</span>
-                    )}
+                    {page ? <> — Page {page}</> : null}
+                    {!page && chunkIndex !== undefined ? <> — Chunk {chunkIndex}</> : null}
                   </span>
                 </div>
               );

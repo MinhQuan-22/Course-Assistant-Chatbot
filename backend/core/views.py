@@ -577,3 +577,19 @@ def upload_document(request):
     except Exception as e:
         print("Upload error:", str(e))
         return JsonResponse({"error": str(e)}, status=500)
+    
+
+from .services.quiz_service import generate_quiz
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def generate_quiz_api(request):
+    try:
+        questions = generate_quiz()
+
+        return JsonResponse({
+            "questions": questions
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
