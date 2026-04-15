@@ -1,113 +1,172 @@
-import { useState } from 'react';
-import { ClipboardList, CheckCircle2, XCircle, RefreshCw, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { QuizQuestion } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
-const mockQuiz: QuizQuestion[] = [
-  { id: '1', question: 'Nguyên tắc nào trong SOLID nói rằng "mỗi class chỉ nên có một lý do để thay đổi"?', options: ['Open/Closed', 'Single Responsibility', 'Liskov Substitution', 'Dependency Inversion'], correctAnswer: 1, explanation: 'Single Responsibility Principle (SRP) – mỗi class chỉ có một trách nhiệm duy nhất.' },
-  { id: '2', question: 'Trong Scrum, ai chịu trách nhiệm quản lý Product Backlog?', options: ['Scrum Master', 'Dev Team', 'Product Owner', 'Stakeholder'], correctAnswer: 2, explanation: 'Product Owner chịu trách nhiệm quản lý và ưu tiên hóa Product Backlog.' },
-  { id: '3', question: 'Design Pattern nào đảm bảo một class chỉ có duy nhất một instance?', options: ['Factory Method', 'Observer', 'Singleton', 'Strategy'], correctAnswer: 2, explanation: 'Singleton Pattern đảm bảo chỉ có một instance duy nhất của class trong toàn bộ ứng dụng.' },
-  { id: '4', question: 'Mô hình Waterfall có đặc điểm nào sau đây?', options: ['Lặp lại nhiều vòng', 'Tuần tự từ trên xuống', 'Không cần tài liệu', 'Phát triển song song'], correctAnswer: 1, explanation: 'Waterfall là mô hình tuần tự, mỗi giai đoạn phải hoàn thành trước khi sang giai đoạn tiếp theo.' },
-  { id: '5', question: 'UML Use Case Diagram dùng để mô tả điều gì?', options: ['Cấu trúc lớp', 'Tương tác người dùng với hệ thống', 'Luồng dữ liệu', 'Quan hệ giữa các bảng'], correctAnswer: 1, explanation: 'Use Case Diagram mô tả các chức năng hệ thống từ góc nhìn người dùng (Actor).' },
-];
+const API_BASE_URL = 'http://127.0.0.1:8000/api';
+
+type QuizQuestion = {
+  id: number;
+  question: string;
+  statement?: string;
+  options: string[];
+  answer: number;
+};
 
 export default function QuizPage() {
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [isLoading, setIsLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSelect = (qId: string, idx: number) => {
-    if (submitted) return;
-    setAnswers((prev) => ({ ...prev, [qId]: idx }));
+  const fetchQuiz = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/quiz/generate/`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setQuestions(data.questions || []);
+      } else {
+        setQuestions([]);
+      }
+    } catch {
+      setQuestions([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const score = mockQuiz.filter((q) => answers[q.id] === q.correctAnswer).length;
+  useEffect(() => {
+    fetchQuiz();
+  }, []);
 
-  const handleReset = () => {
-    setAnswers({});
+  const handleSelect = (questionId: number, optionIndex: number) => {
+    if (submitted) return;
+
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: optionIndex,
+    }));
+  };
+
+  const score = useMemo(() => {
+    return questions.reduce((total, q) => {
+      return total + (answers[q.id] === q.answer ? 1 : 0);
+    }, 0);
+  }, [questions, answers]);
+
+  const answeredCount = Object.keys(answers).length;
+
+  const handleSubmit = () => {
+    setSubmitted(true);
+  };
+
+  const handleRetry = async () => {
     setSubmitted(false);
+    setAnswers({});
+    setIsLoading(true);
+    await fetchQuiz();
   };
 
   return (
     <div className="p-6 overflow-y-auto h-full">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Quiz – Software Engineering</h1>
-            <p className="text-muted-foreground">Revise your knowledge with AI-generated quizzes</p>
-          </div>
-          <Button variant="outline" className="gap-2">
-            <Sparkles className="w-4 h-4" />
-            Create new quiz
-          </Button>
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Quiz</h1>
+          <p className="text-muted-foreground">
+            Test your understanding of Software Engineering concepts
+          </p>
         </div>
 
-        <div className="space-y-4">
-          {mockQuiz.map((q, qi) => (
-            <Card key={q.id} className="p-5 animate-fade-in" style={{ animationDelay: `${qi * 100}ms` }}>
-              <p className="font-medium text-foreground mb-3">
-                <span className="text-primary mr-2">Câu {qi + 1}.</span>
-                {q.question}
-              </p>
-              <div className="space-y-2">
-                {q.options.map((opt, i) => {
-                  const selected = answers[q.id] === i;
-                  const isCorrect = q.correctAnswer === i;
-                  let optClass = 'border rounded-lg px-4 py-2.5 text-sm cursor-pointer transition-all ';
-                  if (submitted) {
-                    if (isCorrect) optClass += 'border-success bg-success/10 text-foreground';
-                    else if (selected) optClass += 'border-destructive bg-destructive/10 text-foreground';
-                    else optClass += 'border-border text-muted-foreground';
-                  } else {
-                    optClass += selected ? 'border-primary bg-primary/5 text-foreground' : 'border-border hover:border-primary/50 hover:bg-muted/50 text-foreground';
-                  }
+        {isLoading ? (
+          <div className="text-muted-foreground">Loading quiz...</div>
+        ) : questions.length === 0 ? (
+          <div className="text-muted-foreground">No quiz questions available.</div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <Badge variant="secondary">
+                Answered: {answeredCount}/{questions.length}
+              </Badge>
 
-                  return (
-                    <div key={i} className={optClass} onClick={() => handleSelect(q.id, i)}>
-                      <div className="flex items-center gap-3">
-                        <span className="w-6 h-6 rounded-full border flex items-center justify-center text-xs font-medium shrink-0">
-                          {String.fromCharCode(65 + i)}
-                        </span>
-                        <span>{opt}</span>
-                        {submitted && isCorrect && <CheckCircle2 className="w-4 h-4 text-success ml-auto" />}
-                        {submitted && selected && !isCorrect && <XCircle className="w-4 h-4 text-destructive ml-auto" />}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {submitted && q.explanation && (
-                <p className="text-sm text-muted-foreground mt-3 bg-muted/50 rounded-lg p-3">
-                  💡 {q.explanation}
-                </p>
+              {submitted && (
+                <Badge variant="default">
+                  Score: {score}/{questions.length}
+                </Badge>
               )}
-            </Card>
-          ))}
-        </div>
+            </div>
 
-        <div className="flex items-center justify-between mt-6 p-4 bg-card rounded-xl border">
-          {submitted ? (
-            <>
-              <p className="font-semibold text-foreground">
-                Result: <span className="text-primary">{score}/{mockQuiz.length}</span> correct quiz
-              </p>
-              <Button onClick={handleReset} variant="outline" className="gap-2">
-                <RefreshCw className="w-4 h-4" />
-                Try again
-              </Button>
-            </>
-          ) : (
-            <>
-              <p className="text-sm text-muted-foreground">
-                Chose {Object.keys(answers).length}/{mockQuiz.length} quiz
-              </p>
-              <Button onClick={() => setSubmitted(true)} disabled={Object.keys(answers).length < mockQuiz.length}>
-                <ClipboardList className="w-4 h-4 mr-2" />
-                Submit
-              </Button>
-            </>
-          )}
-        </div>
+            <div className="space-y-4">
+              {questions.map((q, index) => (
+                <Card key={q.id} className="p-5 space-y-4">
+                  <div>
+                    <h2 className="font-semibold text-foreground">
+                      Question {index + 1}
+                    </h2>
+
+                    <p className="text-sm text-foreground mt-2">{q.question}</p>
+
+                    {q.statement && (
+                      <div className="mt-3 rounded-lg bg-muted/40 px-4 py-3 text-sm text-muted-foreground leading-relaxed">
+                        {q.statement}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    {q.options.map((option, optionIndex) => {
+                      const isSelected = answers[q.id] === optionIndex;
+                      const isCorrect = q.answer === optionIndex;
+
+                      let className =
+                        'w-full text-left px-4 py-3 rounded-lg border transition-colors';
+
+                      if (submitted) {
+                        if (isCorrect) {
+                          className += ' border-green-500 bg-green-50 text-green-900';
+                        } else if (isSelected && !isCorrect) {
+                          className += ' border-red-500 bg-red-50 text-red-900';
+                        } else {
+                          className += ' border-border bg-background';
+                        }
+                      } else {
+                        className += isSelected
+                          ? ' border-primary bg-primary/5'
+                          : ' border-border hover:bg-muted/50';
+                      }
+
+                      return (
+                        <button
+                          key={optionIndex}
+                          className={className}
+                          onClick={() => handleSelect(q.id, optionIndex)}
+                        >
+                          <span className="font-medium mr-2">
+                            {String.fromCharCode(65 + optionIndex)}.
+                          </span>
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              {!submitted ? (
+                <Button
+                  onClick={handleSubmit}
+                  disabled={answeredCount !== questions.length}
+                >
+                  Submit Quiz
+                </Button>
+              ) : (
+                <Button onClick={handleRetry}>Generate New Quiz</Button>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

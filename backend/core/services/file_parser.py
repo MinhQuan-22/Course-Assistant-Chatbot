@@ -37,3 +37,18 @@ def parse_file(file_path: str) -> str:
         return parse_docx(file_path)
 
     raise ValueError(f"Unsupported file type: {ext}")
+
+def parse_pdf_pages(file_path: str):
+    reader = PdfReader(file_path)
+    pages = []
+
+    for idx, page in enumerate(reader.pages):
+        page_text = page.extract_text() or ""
+        cleaned = clean_text(page_text)
+        if cleaned:
+            pages.append({
+                "page": idx + 1,
+                "text": cleaned
+            })
+
+    return pages

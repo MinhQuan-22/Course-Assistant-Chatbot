@@ -35,4 +35,6 @@ urlpatterns = [
 
     path('documents/', get_documents),
     path('documents/upload/', upload_document),
+
+    path('quiz/generate/', generate_quiz_api),
 ]
