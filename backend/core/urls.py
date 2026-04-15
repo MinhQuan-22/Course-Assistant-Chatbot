@@ -3,6 +3,7 @@ from .views import (
     get_users,
     register_user,
     login_user,
+    google_login,
     get_me,
     send_chat_message,
     get_conversations,
@@ -15,6 +16,7 @@ urlpatterns = [
     path('users/', get_users),
     path('auth/register/', register_user),
     path('auth/login/', login_user),
+    path('auth/google/', google_login),
     path('auth/me/', get_me),
 
     path('chat/send/', send_chat_message),

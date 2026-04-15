@@ -142,3 +142,7 @@ import os
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
+
+
+#google login
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
