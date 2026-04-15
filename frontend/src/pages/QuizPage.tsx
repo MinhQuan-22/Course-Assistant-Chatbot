@@ -33,12 +33,12 @@ export default function QuizPage() {
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Trắc nghiệm – Kỹ thuật Phần mềm</h1>
-            <p className="text-muted-foreground">Ôn tập kiến thức với câu hỏi AI-generated</p>
+            <h1 className="text-2xl font-bold text-foreground">Quiz – Software Engineering</h1>
+            <p className="text-muted-foreground">Revise your knowledge with AI-generated quizzes</p>
           </div>
           <Button variant="outline" className="gap-2">
             <Sparkles className="w-4 h-4" />
-            Tạo câu hỏi mới
+            Create new quiz
           </Button>
         </div>
 
@@ -89,21 +89,21 @@ export default function QuizPage() {
           {submitted ? (
             <>
               <p className="font-semibold text-foreground">
-                Kết quả: <span className="text-primary">{score}/{mockQuiz.length}</span> câu đúng
+                Result: <span className="text-primary">{score}/{mockQuiz.length}</span> correct quiz
               </p>
               <Button onClick={handleReset} variant="outline" className="gap-2">
                 <RefreshCw className="w-4 h-4" />
-                Làm lại
+                Try again
               </Button>
             </>
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                Đã chọn {Object.keys(answers).length}/{mockQuiz.length} câu
+                Chose {Object.keys(answers).length}/{mockQuiz.length} quiz
               </p>
               <Button onClick={() => setSubmitted(true)} disabled={Object.keys(answers).length < mockQuiz.length}>
                 <ClipboardList className="w-4 h-4 mr-2" />
-                Nộp bài
+                Submit
               </Button>
             </>
           )}

@@ -18,36 +18,130 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+type AllowedRole = "student" | "teacher" | "admin";
+
+function ProtectedRoute({
+  children,
+  allowedRoles,
+}: {
+  children: React.ReactNode;
+  allowedRoles?: AllowedRole[];
+}) {
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && (!user || !allowedRoles.includes(user.role as AllowedRole))) {
+    if (user?.role === "admin") return <Navigate to="/admin" replace />;
+    if (user?.role === "teacher") return <Navigate to="/documents" replace />;
+    return <Navigate to="/chat" replace />;
+  }
+
   return <AppLayout>{children}</AppLayout>;
 }
 
 function AppRoutes() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
+  const defaultRoute = !isAuthenticated
+    ? "/login"
+    : user?.role === "admin"
+    ? "/admin"
+    : user?.role === "teacher"
+    ? "/documents"
+    : "/chat";
+
   return (
     <Routes>
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/chat" replace /> : <LoginPage />} />
-      <Route path="/" element={<Navigate to={isAuthenticated ? "/chat" : "/login"} replace />} />
-      <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-      <Route path="/documents" element={<ProtectedRoute><DocumentsPage /></ProtectedRoute>} />
-      <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
-      <Route path="/quiz" element={<ProtectedRoute><QuizPage /></ProtectedRoute>} />
-      <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
-      <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-      <Route path="/admin/users" element={<ProtectedRoute><AdminUsersPage /></ProtectedRoute>} />
-      <Route path="/admin/settings" element={<ProtectedRoute><AdminSettingsPage /></ProtectedRoute>} />
+      <Route
+        path="/login"
+        element={isAuthenticated ? <Navigate to={defaultRoute} replace /> : <LoginPage />}
+      />
+
+      <Route path="/" element={<Navigate to={defaultRoute} replace />} />
+
+      {/* Student only */}
+      <Route
+        path="/chat"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <ChatPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <HistoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/quiz"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <QuizPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Student + Teacher + Admin */}
+      <Route
+        path="/documents"
+        element={
+          <ProtectedRoute allowedRoles={["student", "teacher", "admin"]}>
+            <DocumentsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Teacher only for now */}
+      <Route
+        path="/stats"
+        element={
+          <ProtectedRoute allowedRoles={["teacher"]}>
+            <StatsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Admin only */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminUsersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

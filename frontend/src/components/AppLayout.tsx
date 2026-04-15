@@ -14,7 +14,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <header className="h-12 flex items-center border-b bg-card/80 backdrop-blur-sm px-4 shrink-0">
             <SidebarTrigger className="mr-3" />
             <span className="text-sm text-muted-foreground">
-              {user?.role === 'student' ? 'Sinh viên' : user?.role === 'teacher' ? 'Giáo viên' : 'Quản trị viên'}
+              {user?.role === 'student' ? 'Student' : user?.role === 'teacher' ? 'Teacher' : 'Admin'}
             </span>
           </header>
           <main className="flex-1 overflow-hidden">

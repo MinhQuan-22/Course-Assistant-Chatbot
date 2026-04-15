@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       return {
         success: false,
-        message: 'Không thể kết nối tới server',
+        message: 'Cannot connect to the server',
       };
     }
   };
