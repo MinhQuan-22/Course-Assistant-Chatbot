@@ -115,6 +115,19 @@ CREATE TABLE quiz_answers (
 );
 
 -- =====================================
+-- 9. PASSWORD RESETS
+-- Store OTP for password reset requests
+-- =====================================
+CREATE TABLE password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(150) NOT NULL,
+    otp VARCHAR(6) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    INDEX idx_email (email)
+);
+
+-- =====================================
 -- Alter table Users for Google Auth
 -- =====================================
 ALTER TABLE users

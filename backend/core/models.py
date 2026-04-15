@@ -127,3 +127,14 @@ class QuizAnswer(models.Model):
     class Meta:
         db_table = 'quiz_answers'
         managed = False
+
+
+class PasswordReset(models.Model):
+    email = models.CharField(max_length=150)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        db_table = 'password_resets'
+        managed = False

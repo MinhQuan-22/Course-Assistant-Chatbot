@@ -6,6 +6,12 @@ interface LoginPayload {
   password: string;
 }
 
+interface SignupPayload {
+  name: string;
+  email: string;
+  password: string;
+}
+
 interface AuthResult {
   success: boolean;
   message?: string;
@@ -18,6 +24,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (payload: LoginPayload) => Promise<AuthResult>;
   loginWithGoogle: (credential: string) => Promise<AuthResult>;
+  signup: (payload: SignupPayload) => Promise<AuthResult>;
   logout: () => void;
 }
 
@@ -116,6 +123,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signup = async ({ name, email, password }: SignupPayload): Promise<AuthResult> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/signup/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || 'Sign up failed',
+        };
+      }
+
+      saveAuth(data);
+      return { success: true };
+    } catch {
+      return {
+        success: false,
+        message: 'Cannot connect to the server',
+      };
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -132,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         login,
         loginWithGoogle,
+        signup,
         logout,
       }}
     >

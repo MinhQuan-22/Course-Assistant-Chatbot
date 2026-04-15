@@ -147,3 +147,11 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
 #google login
 
 GOOGLE_CLIENT_ID = "576215188562-kmsnc5eg220mbpc5247fjgvofdhjkses.apps.googleusercontent.com"
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'joumitthavong@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'fprd vtxe yvtg ymsm')
