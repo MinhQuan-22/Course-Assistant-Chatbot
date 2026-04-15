@@ -23,7 +23,10 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  sources?: Source[];
+  sources?: {
+    document_name?: string;
+    chunk_index?: number;
+  }[];
   isStreaming?: boolean;
 }
 

@@ -11,11 +11,16 @@ export function ChatMessageBubble({ message }: Props) {
 
   return (
     <div className={`flex gap-3 animate-fade-in ${isUser ? 'flex-row-reverse' : ''}`}>
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isUser ? 'bg-primary' : 'bg-muted'}`}>
-        {isUser
-          ? <User className="w-4 h-4 text-primary-foreground" />
-          : <Bot className="w-4 h-4 text-foreground" />
-        }
+      <div
+        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+          isUser ? 'bg-primary' : 'bg-muted'
+        }`}
+      >
+        {isUser ? (
+          <User className="w-4 h-4 text-primary-foreground" />
+        ) : (
+          <Bot className="w-4 h-4 text-foreground" />
+        )}
       </div>
 
       <div className={`max-w-[75%] space-y-2 ${isUser ? 'items-end' : 'items-start'}`}>
@@ -35,20 +40,41 @@ export function ChatMessageBubble({ message }: Props) {
 
         {message.sources && message.sources.length > 0 && (
           <div className="space-y-1">
-            {message.sources.map((source, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 animate-slide-in">
-                <FileText className="w-3 h-3 mt-0.5 shrink-0" />
-                <span>
-                  <strong>{source.documentName}</strong> — Trang {source.page}
-                  {source.snippet && <span className="block mt-0.5 italic">"{source.snippet}"</span>}
-                </span>
-              </div>
-            ))}
+            {message.sources.map((source: any, i: number) => {
+              const documentName = source.documentName || source.document_name || 'Unknown document';
+              const page = source.page;
+              const chunkIndex = source.chunk_index;
+              const snippet = source.snippet;
+
+              return (
+                <div
+                  key={i}
+                  className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 animate-slide-in"
+                >
+                  <FileText className="w-3 h-3 mt-0.5 shrink-0" />
+                  <span>
+                    <strong>{documentName}</strong>
+                    {page !== undefined && page !== null ? (
+                      <> — Page {page}</>
+                    ) : chunkIndex !== undefined && chunkIndex !== null ? (
+                      <> — Chunk {chunkIndex}</>
+                    ) : null}
+
+                    {snippet && (
+                      <span className="block mt-0.5 italic">"{snippet}"</span>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
 
         <span className="text-[10px] text-muted-foreground/60 px-1">
-          {message.timestamp.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+          {message.timestamp.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
         </span>
       </div>
     </div>

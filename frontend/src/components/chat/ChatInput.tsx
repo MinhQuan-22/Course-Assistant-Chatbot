@@ -34,7 +34,7 @@ export function ChatInput({ onSend, disabled }: Props) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Nhập câu hỏi về môn học..."
+            placeholder="Ask a question about the course..."
             disabled={disabled}
             rows={1}
             className="w-full resize-none rounded-xl border bg-background px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground disabled:opacity-50 scrollbar-thin"
@@ -51,7 +51,7 @@ export function ChatInput({ onSend, disabled }: Props) {
         </Button>
       </div>
       <p className="text-[10px] text-muted-foreground/50 text-center mt-2">
-        Chatbot sử dụng RAG để trả lời dựa trên tài liệu môn học. Câu trả lời có thể không chính xác 100%.
+        This chatbot uses RAG to answer based on course materials. Responses may not always be 100% accurate.
       </p>
     </div>
   );

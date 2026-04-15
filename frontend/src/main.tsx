@@ -10,3 +10,8 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </GoogleOAuthProvider>
 );
+
+
+if (!googleClientId) {
+  console.error("Google Client ID is missing");
+}

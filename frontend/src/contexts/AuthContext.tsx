@@ -6,12 +6,18 @@ interface LoginPayload {
   password: string;
 }
 
+interface AuthResult {
+  success: boolean;
+  message?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (payload: LoginPayload) => Promise<{ success: boolean; message?: string }>;
+  login: (payload: LoginPayload) => Promise<AuthResult>;
+  loginWithGoogle: (credential: string) => Promise<AuthResult>;
   logout: () => void;
 }
 
@@ -38,7 +44,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = async ({ identifier, password }: LoginPayload) => {
+  const saveAuth = (data: any) => {
+    const normalizedUser: User = {
+      id: String(data.user.id),
+      name: data.user.name,
+      email: data.user.email,
+      role: data.user.role,
+      avatar: data.user.avatar || '',
+    };
+
+    setToken(data.token);
+    setUser(normalizedUser);
+
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(normalizedUser));
+  };
+
+  const login = async ({ identifier, password }: LoginPayload): Promise<AuthResult> => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login/`, {
         method: 'POST',
@@ -53,29 +75,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!response.ok) {
         return {
           success: false,
-          message: data.error || 'Đăng nhập thất bại',
+          message: data.error || 'Login failed',
         };
       }
 
-      const normalizedUser: User = {
-        id: String(data.user.id),
-        name: data.user.name,
-        email: data.user.email,
-        role: data.user.role,
-        avatar: '',
-      };
-
-      setToken(data.token);
-      setUser(normalizedUser);
-
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(normalizedUser));
-
+      saveAuth(data);
       return { success: true };
-    } catch (error) {
+    } catch {
       return {
         success: false,
-        message: 'Không thể kết nối tới server',
+        message: 'Cannot connect to the server',
+      };
+    }
+  };
+
+  const loginWithGoogle = async (credential: string): Promise<AuthResult> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/google/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: data.error || 'Google login failed',
+        };
+      }
+
+      saveAuth(data);
+      return { success: true };
+    } catch {
+      return {
+        success: false,
+        message: 'Could not connect to server',
       };
     }
   };
@@ -95,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user && !!token,
         isLoading,
         login,
+        loginWithGoogle,
         logout,
       }}
     >

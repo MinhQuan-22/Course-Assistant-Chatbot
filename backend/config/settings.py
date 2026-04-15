@@ -145,4 +145,5 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
 
 
 #google login
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+
+GOOGLE_CLIENT_ID = "576215188562-kmsnc5eg220mbpc5247fjgvofdhjkses.apps.googleusercontent.com"

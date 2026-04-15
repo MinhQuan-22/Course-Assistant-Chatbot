@@ -2,8 +2,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Cpu } from 'lucide-react';
 
 const models = [
-  { id: 'gpt-3.5', name: 'GPT-3.5 Turbo', desc: 'Nhanh' },
-  { id: 'gpt-4', name: 'GPT-4', desc: 'Thông minh' },
+  { id: 'gpt-3.5', name: 'GPT-3.5 Turbo', desc: 'Fast' },
+  { id: 'gpt-4', name: 'GPT-4', desc: 'Intelligent' },
   { id: 'gemini', name: 'Gemini Pro', desc: 'Google AI' },
   { id: 'llama3', name: 'Llama 3 (Local)', desc: 'Ollama' },
 ];
