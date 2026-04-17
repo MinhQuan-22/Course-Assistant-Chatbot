@@ -44,7 +44,7 @@ export default function LoginPage() {
     setIsSubmitting(false);
 
     if (!result.success) {
-      setError(result.message || 'Login failed');
+      setError('Wrong username/email or password');
       return;
     }
 
@@ -126,20 +126,8 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2 space-y-2">
-                <p>{error}</p>
-                {error.toLowerCase().includes('not found') || error.toLowerCase().includes('invalid') ? (
-                  <p className="text-xs">
-                    Don't have an account?{' '}
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto text-destructive hover:text-destructive/80 font-semibold"
-                      onClick={() => navigate('/signup')}
-                    >
-                      Sign up here
-                    </Button>
-                  </p>
-                ) : null}
+              <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2">
+                {error}
               </div>
             )}
 

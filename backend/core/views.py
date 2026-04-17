@@ -17,7 +17,7 @@ from django.views.decorators.http import require_http_methods
 from django.core.mail import send_mail
 
 from .auth_utils import check_password, create_jwt_token, decode_jwt_token, hash_password
-from .models import Conversation, Document, Message, User, PasswordReset
+from .models import Conversation, Document, Message, User, PasswordReset, QuizAttempt
 from .services.document_ingestion import ingest_document
 from .services.rag_service import generate_answer
 
@@ -426,13 +426,17 @@ def get_conversations(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 def get_conversation_messages(request, conversation_id):
+    user, error_response = get_authenticated_user(request)
+    if error_response:
+        return error_response
+
     try:
-        conversation = Conversation.objects.filter(id=conversation_id).first()
+        conversation = Conversation.objects.filter(id=conversation_id, user=user).first()
 
         if not conversation:
             return JsonResponse({"error": "Conversation not found"}, status=404)
 
-        if conversation.user.role != "student":
+        if user.role != "student":
             return JsonResponse({"error": "Access denied"}, status=403)
 
         messages = Message.objects.filter(conversation=conversation).order_by("created_at")
@@ -463,7 +467,6 @@ def get_conversation_messages(request, conversation_id):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-
 
 @csrf_exempt
 @require_http_methods(["DELETE"])
@@ -774,3 +777,67 @@ def reset_password(request):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+  
+def get_stats(request):
+    user, error_response = get_authenticated_user(request)
+    if error_response:
+        return error_response
+
+    try:
+        if user.role not in ["teacher", "admin"]:
+            return JsonResponse({"error": "Only teacher/admin can view stats"}, status=403)
+
+        students = User.objects.filter(role="student", is_active=True).order_by("name")
+
+        student_rows = []
+        all_attempt_percentages = []
+        total_questions = 0
+        active_students = 0
+
+        for student in students:
+            attempts = list(QuizAttempt.objects.filter(user=student))
+            quiz_count = len(attempts)
+
+            student_percentages = []
+            for attempt in attempts:
+                score = attempt.score or 0
+                total_q = attempt.total_questions or 0
+
+                total_questions += total_q
+
+                if total_q > 0:
+                    percent = round((score / total_q) * 100, 1)
+                    student_percentages.append(percent)
+                    all_attempt_percentages.append(percent)
+
+            message_count = Message.objects.filter(
+                conversation__user=student,
+                role="user"
+            ).count()
+
+            if quiz_count > 0 or message_count > 0:
+                active_students += 1
+
+            avg_score = round(sum(student_percentages) / len(student_percentages), 1) if student_percentages else 0
+
+            student_rows.append({
+                "id": student.id,
+                "name": student.name,
+                "quizzes": quiz_count,
+                "avgScore": avg_score,
+                "messages": message_count,
+            })
+
+        summary = {
+            "activeStudents": active_students,
+            "avgQuizScore": round(sum(all_attempt_percentages) / len(all_attempt_percentages), 1) if all_attempt_percentages else 0,
+            "totalQuestions": total_questions,
+        }
+
+        return JsonResponse({
+            "summary": summary,
+            "students": student_rows,
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500) 
