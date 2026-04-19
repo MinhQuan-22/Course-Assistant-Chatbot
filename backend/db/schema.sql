@@ -294,6 +294,19 @@ CREATE TABLE exam_schedules (
 );
 
 -- =====================================
+-- 21. PASSWORD RESETS
+-- Store OTP for password reset requests
+-- =====================================
+CREATE TABLE password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(150) NOT NULL,
+    otp VARCHAR(6) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    INDEX idx_email (email)
+);
+
+-- =====================================
 -- 18. SYSTEM SETTINGS (AI model config)
 -- =====================================
 CREATE TABLE IF NOT EXISTS system_settings (

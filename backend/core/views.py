@@ -2,6 +2,8 @@ import json
 import os
 import threading
 import secrets
+import random
+from datetime import timedelta
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
@@ -12,9 +14,10 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.core.mail import send_mail
 
 from .auth_utils import check_password, create_jwt_token, decode_jwt_token, hash_password
-from .models import Conversation, Document, Message, User
+from .models import Conversation, Document, Message, User, PasswordReset, QuizAttempt
 from .services.document_ingestion import ingest_document
 from .services.rag_service import generate_answer_stream
 from django.http import StreamingHttpResponse
@@ -525,13 +528,17 @@ def get_conversations(request):
 
 @csrf_exempt
 def get_conversation_messages(request, conversation_id):
+    user, error_response = get_authenticated_user(request)
+    if error_response:
+        return error_response
+
     try:
-        conversation = Conversation.objects.filter(id=conversation_id).first()
+        conversation = Conversation.objects.filter(id=conversation_id, user=user).first()
 
         if not conversation:
             return JsonResponse({"error": "Conversation not found"}, status=404)
 
-        if conversation.user.role != "student":
+        if user.role != "student":
             return JsonResponse({"error": "Access denied"}, status=403)
 
         if request.method == "DELETE":
@@ -565,6 +572,33 @@ def get_conversation_messages(request, conversation_id):
             )
 
         return JsonResponse(data, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_conversation(request, conversation_id):
+    user, error_response = get_authenticated_user(request)
+    if error_response:
+        return error_response
+
+    try:
+        conversation = Conversation.objects.filter(id=conversation_id, user=user).first()
+
+        if not conversation:
+            return JsonResponse({"error": "Conversation not found"}, status=404)
+
+        # Delete all messages in the conversation
+        Message.objects.filter(conversation=conversation).delete()
+
+        # Delete the conversation
+        conversation.delete()
+
+        return JsonResponse(
+            {"message": "Conversation deleted successfully"},
+            status=200,
+        )
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
@@ -685,19 +719,233 @@ def upload_document(request):
     except Exception as e:
         print("Upload error:", str(e))
         return JsonResponse({"error": str(e)}, status=500)
-    
 
-from .services.quiz_service import generate_quiz
 
 @csrf_exempt
-@require_http_methods(["GET"])
-def generate_quiz_api(request):
-    try:
-        questions = generate_quiz()
+def forgot_password(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
 
-        return JsonResponse({
-            "questions": questions
-        }, status=200)
+    try:
+        body = json.loads(request.body)
+        email = body.get("email", "").strip().lower()
+
+        if not email:
+            return JsonResponse({"error": "Email is required"}, status=400)
+
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return JsonResponse({"error": "Email not found"}, status=404)
+
+        # Generate 6-digit OTP
+        otp = str(random.randint(100000, 999999))
+        
+        # Delete any existing OTP for this email
+        PasswordReset.objects.filter(email=email).delete()
+        
+        # Create new password reset record
+        expires_at = timezone.now() + timedelta(minutes=10)
+        PasswordReset.objects.create(
+            email=email,
+            otp=otp,
+            expires_at=expires_at,
+        )
+
+        # Send OTP email
+        subject = "Password Reset OTP - 3N Chatbot"
+        message = f"""
+        Hello {user.name},
+
+        Your OTP for password reset is: {otp}
+
+        This OTP will expire in 10 minutes.
+
+        If you didn't request this, please ignore this email.
+
+        Best regards,
+        3N Chatbot Team
+        """
+
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.EMAIL_HOST_USER,
+                [email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            # If email sending fails, delete the OTP record
+            PasswordReset.objects.filter(email=email, otp=otp).delete()
+            return JsonResponse({"error": f"Failed to send OTP: {str(e)}"}, status=500)
+
+        return JsonResponse(
+            {"message": "OTP sent to your email"},
+            status=200,
+        )
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+def verify_otp(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    try:
+        body = json.loads(request.body)
+        email = body.get("email", "").strip().lower()
+        otp = body.get("otp", "").strip()
+
+        if not email or not otp:
+            return JsonResponse({"error": "Email and OTP are required"}, status=400)
+
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return JsonResponse({"error": "Email not found"}, status=404)
+
+        # Find password reset record
+        reset_record = PasswordReset.objects.filter(email=email).first()
+        
+        if not reset_record:
+            return JsonResponse({"error": "No OTP found for this email"}, status=400)
+
+        # Check if OTP expired
+        if timezone.now() > reset_record.expires_at:
+            reset_record.delete()
+            return JsonResponse({"error": "OTP has expired"}, status=400)
+
+        # Verify OTP
+        if reset_record.otp != otp:
+            return JsonResponse({"error": "Invalid OTP"}, status=400)
+
+        return JsonResponse(
+            {"message": "OTP verified successfully"},
+            status=200,
+        )
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+def reset_password(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    try:
+        body = json.loads(request.body)
+        email = body.get("email", "").strip().lower()
+        otp = body.get("otp", "").strip()
+        new_password = body.get("new_password", "").strip()
+
+        if not email or not otp or not new_password:
+            return JsonResponse(
+                {"error": "Email, OTP, and new password are required"},
+                status=400,
+            )
+
+        if len(new_password) < 8:
+            return JsonResponse(
+                {"error": "Password must be at least 8 characters"},
+                status=400,
+            )
+
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return JsonResponse({"error": "Email not found"}, status=404)
+
+        # Find password reset record
+        reset_record = PasswordReset.objects.filter(email=email).first()
+        
+        if not reset_record:
+            return JsonResponse({"error": "No OTP found for this email"}, status=400)
+
+        # Check if OTP expired
+        if timezone.now() > reset_record.expires_at:
+            reset_record.delete()
+            return JsonResponse({"error": "OTP has expired"}, status=400)
+
+        # Verify OTP
+        if reset_record.otp != otp:
+            return JsonResponse({"error": "Invalid OTP"}, status=400)
+
+        # Update password
+        user.password = hash_password(new_password)
+        user.save(update_fields=["password"])
+
+        # Delete password reset record
+        reset_record.delete()
+
+        return JsonResponse(
+            {"message": "Password reset successfully"},
+            status=200,
+        )
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+  
+def get_stats(request):
+    user, error_response = get_authenticated_user(request)
+    if error_response:
+        return error_response
+
+    try:
+        if user.role not in ["teacher", "admin"]:
+            return JsonResponse({"error": "Only teacher/admin can view stats"}, status=403)
+
+        students = User.objects.filter(role="student", is_active=True).order_by("name")
+
+        student_rows = []
+        all_attempt_percentages = []
+        total_questions = 0
+        active_students = 0
+
+        for student in students:
+            attempts = list(QuizAttempt.objects.filter(user=student))
+            quiz_count = len(attempts)
+
+            student_percentages = []
+            for attempt in attempts:
+                score = attempt.score or 0
+                total_q = attempt.total_questions or 0
+
+                total_questions += total_q
+
+                if total_q > 0:
+                    percent = round((score / total_q) * 100, 1)
+                    student_percentages.append(percent)
+                    all_attempt_percentages.append(percent)
+
+            message_count = Message.objects.filter(
+                conversation__user=student,
+                role="user"
+            ).count()
+
+            if quiz_count > 0 or message_count > 0:
+                active_students += 1
+
+            avg_score = round(sum(student_percentages) / len(student_percentages), 1) if student_percentages else 0
+
+            student_rows.append({
+                "id": student.id,
+                "name": student.name,
+                "quizzes": quiz_count,
+                "avgScore": avg_score,
+                "messages": message_count,
+            })
+
+        summary = {
+            "activeStudents": active_students,
+            "avgQuizScore": round(sum(all_attempt_percentages) / len(all_attempt_percentages), 1) if all_attempt_percentages else 0,
+            "totalQuestions": total_questions,
+        }
+
+        return JsonResponse({
+            "summary": summary,
+            "students": student_rows,
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500) 

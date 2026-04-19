@@ -416,3 +416,18 @@ class AnnouncementRead(models.Model):
         db_table = 'announcement_reads'
         managed = False
         unique_together = [('announcement', 'user')]
+
+
+# ────────────────────────────────────────────────────────────
+# 21. PASSWORD RESETS
+# ────────────────────────────────────────────────────────────
+class PasswordReset(models.Model):
+    email = models.CharField(max_length=150)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        db_table = 'password_resets'
+        managed = False
+

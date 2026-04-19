@@ -2,7 +2,8 @@ from django.urls import path
 from .views import (
     register_user, login_user, google_login, get_me, get_users,
     send_chat_message, send_chat_message_stream, get_conversations, get_conversation_messages,
-    get_documents, upload_document, generate_quiz_api,
+    delete_conversation, get_documents, upload_document, generate_quiz_api,
+    forgot_password, verify_otp, reset_password, get_stats,
 )
 from .views_admin import (
     admin_users, admin_user_detail, admin_stats,
@@ -43,9 +44,13 @@ from .views_student import (
 urlpatterns = [
     # ── Auth ──────────────────────────────────────────────────────────────────
     path('auth/register/', register_user),
+    path('auth/signup/', register_user),
     path('auth/login/',    login_user),
     path('auth/google/',   google_login),
     path('auth/me/',       get_me),
+    path('auth/forgot-password/', forgot_password),
+    path('auth/verify-otp/', verify_otp),
+    path('auth/reset-password/', reset_password),
 
     # ── Users (generic, public for chat) ──────────────────────────────────────
     path('users/', get_users),
@@ -104,6 +109,7 @@ urlpatterns = [
     path('chat/send-stream/',      send_chat_message_stream),
     path('chat/conversations/',    get_conversations),
     path('chat/conversations/<int:conversation_id>/', get_conversation_messages),
+    path('chat/conversations/<int:conversation_id>/delete/', delete_conversation),
 
     # ── Documents (public/legacy)  ────────────────────────────────────────────
     path('documents/',         get_documents),
@@ -124,4 +130,7 @@ urlpatterns = [
 
     # ── Quiz (legacy) ─────────────────────────────────────────────────────────
     path('quiz/generate/', generate_quiz_api),
+    
+    # ── Stats (generic) ───────────────────────────────────────────────────────
+    path('stats/', get_stats),
 ]

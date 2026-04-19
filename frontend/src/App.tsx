@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/AppLayout";
 import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ChatPage from "./pages/ChatPage";
 import DocumentsPage from "./pages/DocumentsPage";
 import HistoryPage from "./pages/HistoryPage";
@@ -83,6 +85,14 @@ function AppRoutes() {
       <Route
         path="/login"
         element={isAuthenticated ? <Navigate to={defaultRoute} replace /> : <LoginPage />}
+      />
+      <Route
+        path="/signup"
+        element={isAuthenticated ? <Navigate to={defaultRoute} replace /> : <SignupPage />}
+      />
+      <Route
+        path="/forgot-password"
+        element={isAuthenticated ? <Navigate to={defaultRoute} replace /> : <ForgotPasswordPage />}
       />
 
       <Route path="/" element={<Navigate to={defaultRoute} replace />} />

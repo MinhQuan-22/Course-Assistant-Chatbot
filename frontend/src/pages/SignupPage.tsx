@@ -5,19 +5,20 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
+import { Loader2, LogIn, ArrowLeft } from 'lucide-react';
 
-export default function LoginPage() {
-  const { login, loginWithGoogle } = useAuth();
+export default function SignupPage() {
+  const { signup, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
-  const [identifier, setIdentifier] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const goAfterLogin = () => {
+  const goAfterSignup = () => {
     const savedUser = localStorage.getItem('user');
     if (!savedUser) {
       setError('Could not load user information');
@@ -37,18 +38,40 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validation
+    if (!name.trim()) {
+      setError('Name is required');
+      return;
+    }
+
+    if (!email.trim()) {
+      setError('Email is required');
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setIsSubmitting(true);
 
-    const result = await login({ identifier, password });
+    const result = await signup({ name, email, password });
 
     setIsSubmitting(false);
 
     if (!result.success) {
-      setError('Wrong username/email or password');
+      setError(result.message || 'Sign up failed');
       return;
     }
 
-    goAfterLogin();
+    goAfterSignup();
   };
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
@@ -66,11 +89,11 @@ export default function LoginPage() {
     setIsSubmitting(false);
 
     if (!result.success) {
-      setError(result.message || 'Google login failed');
+      setError(result.message || 'Google sign up failed');
       return;
     }
 
-    goAfterLogin();
+    goAfterSignup();
   };
 
   return (
@@ -87,58 +110,54 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-card rounded-xl border p-6 shadow-sm space-y-4">
-          <h2 className="text-lg font-semibold text-card-foreground text-center">Sign in</h2>
+          <h2 className="text-lg font-semibold text-card-foreground text-center">Create Account</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="identifier">Username or Email</Label>
+              <Label htmlFor="name">Full Name</Label>
               <Input
-                id="identifier"
-                placeholder="Enter your username or email"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                id="name"
+                placeholder="Enter your full name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 disabled={isSubmitting}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isSubmitting}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onMouseDown={() => setShowPassword(true)}
-                  onMouseUp={() => setShowPassword(false)}
-                  onMouseLeave={() => setShowPassword(false)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors select-none"
-                  tabIndex={-1}
-                  aria-label="Giữ để hiện mật khẩu"
-                >
-                  {showPassword
-                    ? <EyeOff className="w-4 h-4" />
-                    : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
+              <Input
+                id="password"
+                type="password"
+                placeholder="At least 8 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isSubmitting}
+              />
             </div>
 
-            <div className="flex items-center justify-between">
-
-              <button
-                type="button"
-                onClick={() => navigate('/forgot-password')}
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={isSubmitting}
-                className="text-sm text-primary hover:underline disabled:opacity-50"
-              >
-                Forgot password?
-              </button>
+              />
             </div>
 
             {error && (
@@ -151,27 +170,16 @@ export default function LoginPage() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Signing in...
+                  Creating account...
                 </>
               ) : (
                 <>
                   <LogIn className="w-4 h-4" />
-                  Sign in
+                  Sign up
                 </>
               )}
             </Button>
           </form>
-
-          <div className="text-center text-sm">
-            <span className="text-muted-foreground">Don't have an account? </span>
-            <button
-              onClick={() => navigate('/signup')}
-              disabled={isSubmitting}
-              className="text-primary hover:underline font-medium disabled:opacity-50"
-            >
-              Sign up
-            </button>
-          </div>
 
           <div className="relative py-2">
             <div className="absolute inset-0 flex items-center">
@@ -185,8 +193,19 @@ export default function LoginPage() {
           <div className="flex justify-center">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => setError('Google login failed')}
+              onError={() => setError('Google sign up failed')}
             />
+          </div>
+
+          <div className="pt-2 border-t">
+            <Button
+              variant="ghost"
+              className="w-full gap-2 text-muted-foreground hover:text-foreground"
+              onClick={() => navigate('/login')}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Login
+            </Button>
           </div>
         </div>
 
