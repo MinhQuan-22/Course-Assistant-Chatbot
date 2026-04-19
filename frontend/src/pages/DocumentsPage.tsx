@@ -12,10 +12,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
-
-type UserRole = 'student' | 'teacher' | 'admin';
 
 type DocumentItem = {
   id: number;
@@ -23,7 +22,8 @@ type DocumentItem = {
   file_path: string;
   file_type: string;
   file_size: number;
-  uploaded_by: number;
+  uploaded_by_id: number;
+  uploaded_by_name?: string;
   status: 'ready' | 'processing' | 'error';
   uploaded_at: string;
 };
@@ -40,20 +40,39 @@ export default function DocumentsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
 
-  const savedUser = localStorage.getItem('user');
-  const user = savedUser ? JSON.parse(savedUser) : null;
-  const userRole: UserRole | undefined = user?.role;
+  const { user, token } = useAuth();
+  const canUpload = user?.role === 'teacher' || user?.role === 'admin';
 
-  const canUpload = userRole === 'teacher' || userRole === 'admin';
-  const canDelete = userRole === 'teacher' || userRole === 'admin';
+  // Helper check for ownership. Admins can delete anything, teachers can only delete their own
+  const canDelete = (doc: DocumentItem) => {
+    if (user?.role === 'admin') return true;
+    if (user?.role === 'teacher' && String(doc.uploaded_by_id) === String(user.id)) return true;
+    return false;
+  };
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/documents/`);
+      const endpoint = (user?.role === 'teacher' || user?.role === 'admin')
+        ? `${API_BASE_URL}/admin/documents/`
+        : `${API_BASE_URL}/documents/`;
+
+      const headers: Record<string, string> = {};
+      if (token && (user?.role === 'teacher' || user?.role === 'admin')) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(endpoint, { headers });
       const data = await response.json();
 
       if (response.ok) {
-        setDocs(data);
+        // /admin/documents/ returns { documents: [...], total: N }
+        // /documents/ returns a plain array
+        const list: DocumentItem[] = Array.isArray(data)
+          ? data
+          : Array.isArray(data.documents)
+          ? data.documents
+          : [];
+        setDocs(list);
       } else {
         setDocs([]);
       }
@@ -66,7 +85,7 @@ export default function DocumentsPage() {
 
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [user, token]); // re-run if auth token changes
 
   useEffect(() => {
     const hasProcessing = docs.some((doc) => doc.status === 'processing');
@@ -80,17 +99,21 @@ export default function DocumentsPage() {
   }, [docs]);
 
   const handleFileUpload = async (file: File) => {
-    if (!user?.id || !file || !canUpload) return;
+    if (!canUpload || !token) return;
 
     setIsUploading(true);
 
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('uploaded_by', String(user.id));
+      // Removed: formData.append('uploaded_by', String(user.id));
+      // The backend securely infers `uploaded_by` from the JWT now!
 
-      const response = await fetch(`${API_BASE_URL}/documents/upload/`, {
+      const response = await fetch(`${API_BASE_URL}/admin/documents/upload/`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         body: formData,
       });
 
@@ -101,10 +124,30 @@ export default function DocumentsPage() {
       }
 
       await fetchDocuments();
-    } catch {
-      alert('Upload failed');
+    } catch (e: any) {
+      alert(`Upload failed: ${e.message}`);
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleDelete = async (docId: number) => {
+    if (!confirm('Bạn có chắc xoá tài liệu này không?')) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/documents/${docId}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        fetchDocuments(); // Refresh
+      } else {
+        const data = await response.json();
+        alert(`Lỗi: ${data.error}`);
+      }
+    } catch (e: any) {
+      alert(`Xoá thất bại: ${e.message}`);
     }
   };
 
@@ -122,11 +165,11 @@ export default function DocumentsPage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Documents</h1>
+            <h1 className="text-2xl font-bold text-foreground">Tài liệu môn học</h1>
             <p className="text-muted-foreground">
               {canUpload
-                ? 'Upload and manage course knowledge base files'
-                : 'View course knowledge base files'}
+                ? 'Quản lý tài liệu tri thức của môn học'
+                : 'Xem tài liệu tri thức của môn học'}
             </p>
           </div>
 
@@ -135,6 +178,7 @@ export default function DocumentsPage() {
               <input
                 type="file"
                 className="hidden"
+                accept=".txt,.pdf,.docx"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file);
@@ -144,7 +188,7 @@ export default function DocumentsPage() {
               <Button className="gap-2" disabled={isUploading} asChild>
                 <span>
                   <Upload className="w-4 h-4" />
-                  {isUploading ? 'Uploading...' : 'Upload Document'}
+                  {isUploading ? 'Đang tải lên...' : 'Tải tài liệu lên'}
                 </span>
               </Button>
             </label>
@@ -154,7 +198,7 @@ export default function DocumentsPage() {
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search documents..."
+            placeholder="Tìm kiếm tài liệu..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
@@ -162,16 +206,18 @@ export default function DocumentsPage() {
         </div>
 
         {isLoading ? (
-          <div className="text-muted-foreground">Loading documents...</div>
+          <div className="flex items-center justify-center p-8 text-muted-foreground">
+            <Loader2 className="w-6 h-6 animate-spin mr-2" /> Đang tải dữ liệu...
+          </div>
         ) : (
           <Card className="divide-y">
             {filtered.length === 0 ? (
               <div className="p-6 text-muted-foreground text-center">
-                No documents found.
+                Không tìm thấy tài liệu nào.
               </div>
             ) : (
               filtered.map((doc) => {
-                const st = statusConfig[doc.status];
+                const st = statusConfig[doc.status] || statusConfig['error'];
                 const StatusIcon = st.icon;
 
                 return (
@@ -187,7 +233,8 @@ export default function DocumentsPage() {
                       <p className="font-medium text-foreground truncate">{doc.name}</p>
                       <p className="text-xs text-muted-foreground">
                         {formatSize(doc.file_size)} ·{' '}
-                        {new Date(doc.uploaded_at).toLocaleDateString()}
+                        {new Date(doc.uploaded_at).toLocaleDateString('vi-VN')}
+                        {doc.uploaded_by_name && ` · Bởi: ${doc.uploaded_by_name}`}
                       </p>
                     </div>
 
@@ -200,11 +247,12 @@ export default function DocumentsPage() {
                       {st.label}
                     </Badge>
 
-                    {canDelete && (
+                    {canDelete(doc) && (
                       <Button
                         variant="ghost"
                         size="icon"
                         className="text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDelete(doc.id)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

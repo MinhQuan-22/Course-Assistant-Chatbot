@@ -9,6 +9,7 @@ import {
   BarChart3,
   ClipboardList,
   Plus,
+  BookMarked,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -35,15 +36,19 @@ const studentNav = [
 ];
 
 const teacherNav = [
-  { title: 'Documents', url: '/documents', icon: FileText },
-  { title: 'Statistics', url: '/stats', icon: BarChart3 },
+  { title: 'Quản lý Tài liệu', url: '/documents', icon: FileText },
+  { title: 'Quản lý Bài Test', url: '/quizzes', icon: ClipboardList },
+  { title: 'Thống kê Lớp học', url: '/stats', icon: BarChart3 },
 ];
 
 const adminNav = [
-  { title: 'Overview', url: '/admin', icon: BarChart3 },
-  { title: 'Users', url: '/admin/users', icon: Users },
-  { title: 'Documents', url: '/documents', icon: FileText },
-  { title: 'Settings', url: '/admin/settings', icon: Settings },
+  { title: 'Tổng quan',  url: '/admin',                icon: BarChart3  },
+  { title: 'Người dùng', url: '/admin/users',           icon: Users      },
+  { title: 'Học vụ',     url: '/admin/academic',        icon: BookMarked },
+  { title: 'Lịch thi',   url: '/admin/exam-schedules',  icon: ClipboardList },
+  { title: 'Thông báo',  url: '/admin/announcements',   icon: MessageSquare },
+  { title: 'Tài liệu',   url: '/admin/documents',       icon: FileText   },
+  { title: 'Cài đặt',    url: '/admin/settings',        icon: Settings   },
 ];
 
 export function AppSidebar() {
@@ -88,7 +93,7 @@ export function AppSidebar() {
               <Button
                 size="sm"
                 className="w-full gap-2 bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
-                onClick={() => navigate('/chat')}
+                onClick={() => navigate('/chat?new=true')}
               >
                 <Plus className="w-4 h-4" />
                 New Chat

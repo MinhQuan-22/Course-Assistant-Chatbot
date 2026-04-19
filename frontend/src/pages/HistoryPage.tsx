@@ -62,6 +62,30 @@ export default function HistoryPage() {
     navigate(`/chat?conversation_id=${conversationId}`);
   };
 
+  const handleDeleteConversation = async (conversationId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to delete this conversation?')) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat/conversations/${conversationId}/`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setConversations(conversations.filter(c => c.id !== conversationId));
+      } else {
+        alert('Failed to delete conversation');
+      }
+    } catch (error) {
+      console.error('Delete conversation failed:', error);
+      alert('Error connecting to server');
+    }
+  };
+
   return (
     <div className="p-6 overflow-y-auto h-full">
       <div className="max-w-3xl mx-auto">
@@ -97,7 +121,7 @@ export default function HistoryPage() {
                         variant="ghost"
                         size="icon"
                         className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive h-7 w-7"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => handleDeleteConversation(conv.id, e)}
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>

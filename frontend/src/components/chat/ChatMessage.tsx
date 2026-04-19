@@ -1,6 +1,7 @@
 import ReactMarkdown from 'react-markdown';
 import { ChatMessage as ChatMessageType } from '@/types';
 import { Bot, User, FileText } from 'lucide-react';
+import { InChatQuiz } from './InChatQuiz';
 
 interface Props {
   message: ChatMessageType;
@@ -8,6 +9,19 @@ interface Props {
 
 export function ChatMessageBubble({ message }: Props) {
   const isUser = message.role === 'user';
+  
+  let content = message.content || "";
+  let quizData = null;
+
+  const quizMatch = content.match(/\[QUIZ_DATA\](.*?)\[\/QUIZ_DATA\]/s);
+  if (quizMatch) {
+    try {
+      quizData = JSON.parse(quizMatch[1]);
+      content = content.replace(quizMatch[0], '');
+    } catch (e) {
+      console.error("Failed to parse In-Chat quiz JSON");
+    }
+  }
 
   return (
     <div className={`flex gap-3 animate-fade-in ${isUser ? 'flex-row-reverse' : ''}`}>
@@ -32,9 +46,12 @@ export function ChatMessageBubble({ message }: Props) {
               <span className="typing-dot w-2 h-2 rounded-full bg-muted-foreground" />
             </div>
           ) : (
-            <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-headings:my-2 prose-pre:bg-foreground/5 prose-pre:rounded-lg prose-code:text-primary">
-              <ReactMarkdown>{message.content}</ReactMarkdown>
-            </div>
+            <>
+              <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-headings:my-2 prose-pre:bg-foreground/5 prose-pre:rounded-lg prose-code:text-primary">
+                <ReactMarkdown>{content}</ReactMarkdown>
+              </div>
+              {quizData && <InChatQuiz quizData={quizData} />}
+            </>
           )}
         </div>
 

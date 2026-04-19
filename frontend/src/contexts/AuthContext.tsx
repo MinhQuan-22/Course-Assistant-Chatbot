@@ -25,39 +25,81 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
+/** Normalize raw API user object → typed User */
+function normalizeUser(raw: any): User {
+  return {
+    id: String(raw.id),
+    name: raw.name,
+    email: raw.email,
+    role: raw.role,
+    avatar: raw.avatar || '',
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [user, setUser]   = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  /**
+   * On first render, verify stored token against /auth/me/.
+   * This is critical for hard-reload: we can't trust localStorage blindly
+   * because an expired/invalid token would allow ProtectedRoute to render
+   * briefly before redirect, causing a blank screen for teacher/student.
+   */
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
+    const storedToken = localStorage.getItem('token');
 
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch {
-        localStorage.removeItem('user');
-      }
+    if (!storedToken) {
+      // No token at all → go straight to login
+      setIsLoading(false);
+      return;
     }
 
-    setIsLoading(false);
+    // Token exists → verify with server
+    fetch(`${API_BASE_URL}/auth/me/`, {
+      headers: { Authorization: `Bearer ${storedToken}` },
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          // Token invalid / expired → clear everything
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setToken(null);
+          setUser(null);
+          return;
+        }
+        const data = await res.json();
+        const verified = normalizeUser(data.user);
+        setToken(storedToken);
+        setUser(verified);
+        // Keep localStorage in sync with fresh server data
+        localStorage.setItem('user', JSON.stringify(verified));
+      })
+      .catch(() => {
+        // Network error (backend not reachable) → keep cached user so the
+        // app still works offline, but mark loading as done.
+        const cached = localStorage.getItem('user');
+        if (cached) {
+          try {
+            setUser(JSON.parse(cached));
+            setToken(storedToken);
+          } catch {
+            localStorage.removeItem('user');
+          }
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   const saveAuth = (data: any) => {
-    const normalizedUser: User = {
-      id: String(data.user.id),
-      name: data.user.name,
-      email: data.user.email,
-      role: data.user.role,
-      avatar: data.user.avatar || '',
-    };
-
+    const normalized = normalizeUser(data.user);
     setToken(data.token);
-    setUser(normalizedUser);
-
+    setUser(normalized);
     localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(normalizedUser));
+    localStorage.setItem('user', JSON.stringify(normalized));
   };
 
   const login = async ({ identifier, password }: LoginPayload): Promise<AuthResult> => {

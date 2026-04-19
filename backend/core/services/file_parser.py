@@ -1,8 +1,18 @@
 from pathlib import Path
 from pypdf import PdfReader
 from docx import Document as DocxDocument
+import re
 
-
+def clean_text(text: str) -> str:
+    if not text:
+        return ""
+    text = text.replace("\u00a0", " ")
+    text = text.replace("•", " ")
+    text = text.replace("", " ")
+    text = text.replace("«", " ")
+    text = text.replace("»", " ")
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
 def parse_txt(file_path: str) -> str:
     with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
         return f.read()

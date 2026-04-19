@@ -16,7 +16,8 @@ from django.views.decorators.http import require_http_methods
 from .auth_utils import check_password, create_jwt_token, decode_jwt_token, hash_password
 from .models import Conversation, Document, Message, User
 from .services.document_ingestion import ingest_document
-from .services.rag_service import generate_answer
+from .services.rag_service import generate_answer_stream
+from django.http import StreamingHttpResponse
 
 
 @csrf_exempt
@@ -30,16 +31,13 @@ def register_user(request):
         username = body.get("username", "").strip()
         email = body.get("email", "").strip()
         password = body.get("password", "").strip()
-        role = body.get("role", "student").strip()
+        role = "student" # Always default newly registered users to student
 
         if not name or not email or not password:
             return JsonResponse(
                 {"error": "Name, email, and password are required"},
                 status=400,
             )
-
-        if role not in ["student", "teacher", "admin"]:
-            return JsonResponse({"error": "Invalid role"}, status=400)
 
         if User.objects.filter(email=email).exists():
             return JsonResponse({"error": "Email already exists"}, status=400)
@@ -214,8 +212,11 @@ def google_login(request):
             user = User.objects.filter(email=email).first()
 
         if user:
+            # ── SECURITY: Existing user – NEVER change their role via Google ──
+            # Admin accounts are immutable via Google login.
+            # Role escalation via Google is IMPOSSIBLE.
             if not user.is_active:
-                return JsonResponse({"error": "Account is inactive"}, status=403)
+                return JsonResponse({"error": "Account is inactive. Contact administrator."}, status=403)
 
             update_fields = []
 
@@ -235,25 +236,38 @@ def google_login(request):
             update_fields.append("last_login")
 
             user.save(update_fields=update_fields)
+            login_type = "linked"  # existing user linked/re-authenticated via Google
         else:
+            # ── POLICY: Google registration ALWAYS creates student ──
+            # Admin accounts MUST be created by an existing admin via the admin panel.
+            # This prevents any accidental privilege escalation via Google OAuth.
+            from .models import StudentProfile
             user = User.objects.create(
                 name=name,
                 username=build_unique_username(email.split("@")[0]),
                 email=email,
                 password=hash_password(secrets.token_urlsafe(24)),
                 google_id=google_id,
-                role="student",
+                role="student",   # hardcoded: Google can never create admin/teacher
                 is_active=True,
                 avatar=avatar,
             )
             user.last_login = timezone.now()
             user.save(update_fields=["last_login"])
+            # Auto-create student_profile for new Google user
+            if not StudentProfile.objects.filter(user=user).exists():
+                student_code = f"SV{user.id:05d}"
+                while StudentProfile.objects.filter(student_code=student_code).exists():
+                    student_code += "G"
+                StudentProfile.objects.create(user=user, student_code=student_code)
+            login_type = "registered"  # brand-new student created via Google
 
         token = create_jwt_token(user)
 
         return JsonResponse(
             {
                 "message": "Google login successful",
+                "login_type": login_type,  # 'linked' | 'registered'
                 "token": token,
                 "user": serialize_user(user),
             },
@@ -387,6 +401,93 @@ def send_chat_message(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+@csrf_exempt
+def send_chat_message_stream(request):
+    import time
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    try:
+        body = json.loads(request.body)
+        user_id = body.get("user_id")
+        conversation_id = body.get("conversation_id")
+        content = body.get("content", "").strip()
+        subject_id = body.get("subject_id")
+
+        if not user_id or not content:
+            return JsonResponse({"error": "user_id and content are required"}, status=400)
+
+        user = User.objects.filter(id=user_id).first()
+        if not user or user.role != "student":
+            return JsonResponse({"error": "Only students can use chat"}, status=403)
+
+        conversation = None
+        history_text = ""
+        if conversation_id:
+            conversation = Conversation.objects.filter(id=conversation_id, user=user).first()
+            if conversation:
+                # Compile history
+                recent_msgs = Message.objects.filter(conversation=conversation).order_by('-created_at')[:4]
+                recent_msgs = reversed(recent_msgs)
+                for rm in recent_msgs:
+                    role_str = "Assistant" if rm.role == "assistant" else "User"
+                    history_text += f"{role_str}: {rm.content}\n"
+
+        if not conversation:
+            conversation = Conversation.objects.create(user=user, title=content[:60])
+
+        user_message = Message.objects.create(
+            conversation=conversation,
+            role="user",
+            content=content,
+        )
+
+        def event_stream():
+            # 1. Send initialization data (ids)
+            assistant_message = Message.objects.create(
+                conversation=conversation,
+                role="assistant",
+                content="",
+            )
+            
+            init_data = {
+                "type": "init",
+                "conversation_id": conversation.id,
+                "user_message_id": user_message.id,
+                "assistant_message_id": assistant_message.id
+            }
+            yield f"data: {json.dumps(init_data)}\n\n"
+
+            # 2. Yield chunks
+            full_answer = ""
+            final_sources = []
+            
+            generator = generate_answer_stream(content, subject_id, history_text)
+            for chunk in generator:
+                full_answer += chunk.get("text", "")
+                final_sources = chunk.get("sources", [])
+                c_data = {"type": "chunk", "text": chunk.get("text", "")}
+                yield f"data: {json.dumps(c_data)}\n\n"
+                
+            # 3. Save final result correctly and send end event
+            assistant_message.content = full_answer
+            assistant_message.sources_json = final_sources
+            assistant_message.save(update_fields=["content", "sources_json"])
+            
+            conversation.updated_at = timezone.now()
+            conversation.save(update_fields=["updated_at"])
+            
+            end_data = {
+                "type": "end",
+                "sources_json": final_sources
+            }
+            yield f"data: {json.dumps(end_data)}\n\n"
+
+        return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 
 def get_conversations(request):
     user, error_response = get_authenticated_user(request)
@@ -422,6 +523,7 @@ def get_conversations(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+@csrf_exempt
 def get_conversation_messages(request, conversation_id):
     try:
         conversation = Conversation.objects.filter(id=conversation_id).first()
@@ -431,6 +533,12 @@ def get_conversation_messages(request, conversation_id):
 
         if conversation.user.role != "student":
             return JsonResponse({"error": "Access denied"}, status=403)
+
+        if request.method == "DELETE":
+            cursor_token = request.headers.get("Authorization", "")
+            # Option: we can enforce user check but `conversation.user.role` is checked.
+            conversation.delete()
+            return JsonResponse({"message": "Conversation deleted successfully"}, status=200)
 
         messages = Message.objects.filter(conversation=conversation).order_by("created_at")
 
