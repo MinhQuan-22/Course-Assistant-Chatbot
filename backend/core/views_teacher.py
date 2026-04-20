@@ -88,17 +88,22 @@ def teacher_quizzes(request):
     if request.method == 'GET':
         try:
             if user.role == 'teacher':
-                quizzes = Quiz.objects.filter(created_by_id=user.id).order_by('-created_at')
+                quizzes = Quiz.objects.filter(created_by_id=user.id).select_related('class_section', 'class_section__subject').order_by('-created_at')
             else:
-                quizzes = Quiz.objects.all().order_by('-created_at')
+                quizzes = Quiz.objects.all().select_related('class_section', 'class_section__subject').order_by('-created_at')
                 
             data = []
             for q in quizzes:
+                class_section_name = None
+                if q.class_section:
+                    class_section_name = f"{q.class_section.subject.name} ({q.class_section.section_code})" if q.class_section.subject else q.class_section.section_code
+                
                 data.append({
                     "id": q.id,
                     "title": q.title,
                     "subject_id": q.subject_id,
                     "class_section_id": q.class_section_id,
+                    "class_section_name": class_section_name,
                     "description": q.description,
                     "chapter_label": q.chapter_label,
                     "is_published": q.is_published,
@@ -112,10 +117,21 @@ def teacher_quizzes(request):
     elif request.method == 'POST':
         try:
             body = json.loads(request.body)
+            class_section_id_raw = body.get('class_section_id')
+            
+            # Convert to int or None
+            if class_section_id_raw:
+                try:
+                    class_section_id = int(class_section_id_raw)
+                except (ValueError, TypeError):
+                    class_section_id = None
+            else:
+                class_section_id = None
+            
             quiz = Quiz.objects.create(
                 title=body.get('title', 'Untitled Quiz'),
                 subject_id=body.get('subject_id'),
-                class_section_id=body.get('class_section_id'),
+                class_section_id=class_section_id,
                 created_by_id=user.id,
                 source_type='teacher_created',
                 description=body.get('description', ''),
@@ -143,9 +159,16 @@ def teacher_quizzes_generate_ai(request):
     try:
         body = json.loads(request.body)
         title = body.get('title', 'AI Generated Quiz')
-        class_section_id = body.get('class_section_id')
-        document_id = body.get('document_id')
+        class_section_id_raw = body.get('class_section_id')
+        document_id_raw = body.get('document_id')
         question_count = int(body.get('question_count', 5))
+        
+        # Convert to int
+        try:
+            class_section_id = int(class_section_id_raw) if class_section_id_raw else None
+            document_id = int(document_id_raw) if document_id_raw else None
+        except (ValueError, TypeError):
+            return JsonResponse({"error": "Invalid class_section_id or document_id format"}, status=400)
         
         if not class_section_id or not document_id:
             return JsonResponse({"error": "class_section_id and document_id are required"}, status=400)
