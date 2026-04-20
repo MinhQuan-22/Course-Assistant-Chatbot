@@ -15,6 +15,19 @@ Hệ thống bao gồm:
 - AI: RAG với embeddings và vector search
 
 
+🎥 VIDEO DEMO HỆ THỐNG
+--------------------------------------------------------------------------------
+Xem video demo đầy đủ các tính năng của hệ thống tại:
+👉 https://youtu.be/DdiXt_2HFug?si=pJHVW5sr3c_kaSHm
+
+Video bao gồm:
+- Hướng dẫn đăng nhập với các vai trò khác nhau (Admin, Teacher, Student)
+- Demo các tính năng chính của hệ thống
+- Hướng dẫn sử dụng tính năng Chat AI với RAG
+- Hướng dẫn tạo và quản lý Quiz
+- Hướng dẫn upload và quản lý tài liệu
+
+
 ================================================================================
                         YÊU CẦU HỆ THỐNG (PREREQUISITES)
 ================================================================================
