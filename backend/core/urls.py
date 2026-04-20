@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     register_user, login_user, google_login, get_me, get_users,
     send_chat_message, send_chat_message_stream, get_conversations, get_conversation_messages,
-    delete_conversation, get_documents, upload_document, generate_quiz_api,
+    delete_conversation, get_documents, upload_document,
     forgot_password, verify_otp, reset_password, get_stats,
 )
 from .views_admin import (
@@ -129,7 +129,7 @@ urlpatterns = [
     path('student/quizzes/<int:quiz_id>/', student_quiz_detail),
 
     # ── Quiz (legacy) ─────────────────────────────────────────────────────────
-    path('quiz/generate/', generate_quiz_api),
+    # path('quiz/generate/', generate_quiz_api),
     
     # ── Stats (generic) ───────────────────────────────────────────────────────
     path('stats/', get_stats),
