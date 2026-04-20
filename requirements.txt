@@ -1,0 +1,213 @@
+# =========================================================================
+# COURSE ASSISTANT CHATBOT - TỔNG HỢP CÀI ĐẶT, CẤU HÌNH, VÀ BIẾN MÔI TRƯỜNG
+# =========================================================================
+# File này chứa toàn bộ các dependency (Python), đi kèm hướng dẫn cài đặt 
+# Frontend, Backend, Database và các biến môi trường cần thiết để khởi chạy.
+#
+# LƯU Ý: Các phần cấu hình và hướng dẫn đều được comment (#) ở đầu dòng.
+# Điều này giúp bạn vẫn có thể sử dụng file này bình thường với lệnh:
+#       pip install -r requirements.txt
+# mà không gặp lỗi syntax.
+#
+# ==========================================
+# 1. YÊU CẦU HỆ THỐNG (PREREQUISITES)
+# ==========================================
+# - Node.js: v18+ (Dành cho việc chạy Frontend - Vite/React)
+# - Python: 3.9+ (Dành cho Backend - Django)
+# - MySQL Server: 8.0+ (Hoặc chỉ cần Docker để chạy qua file docker-compose.yml)
+# - Docker & Docker Compose (Dành cho việc chạy MySQL & ChromaDB nhanh chóng)
+#
+# ==========================================
+# 2. CẤU HÌNH BIẾN MÔI TRƯỜNG (.env)
+# ==========================================
+# Yêu cầu: Tạo một file tên là `.env` đặt tại thư mục gốc (root) của dự án.
+# Nội dung của file .env cần bao gồm các thông số sau:
+#
+# [Django Config]
+# DJANGO_SECRET_KEY=change_me_to_a_secure_key
+# DJANGO_DEBUG=1
+# DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend
+#
+# [Database Config]
+# # Cấu hình mặc định trong source code đang dùng MySQL ở port 3307
+# MYSQL_DATABASE=course_assistant_db
+# MYSQL_USER=root
+# MYSQL_PASSWORD=root
+# MYSQL_HOST=127.0.0.1
+# MYSQL_PORT=3307
+#
+# # Nếu bạn sửa để xài Postgres thì cấu hình các biến dưới:
+# POSTGRES_DB=course_assistant
+# POSTGRES_USER=postgres
+# POSTGRES_PASSWORD=postgres
+# POSTGRES_HOST=postgres
+# POSTGRES_PORT=5432
+#
+# [Cấu hình gửi Email (SMTP)]
+# EMAIL_HOST_USER=youremail@gmail.com
+# EMAIL_HOST_PASSWORD=your_app_password
+#
+# [Vector DB & AI Models]
+# CHROMA_HOST=127.0.0.1    # Hoặc 'chroma' nếu chạy mạng docker 
+# CHROMA_PORT=8001         # Port map ra ngoài từ docker-compose (8001:8000)
+# OPENAI_API_KEY=your_openai_api_key_here
+# GEMINI_API_KEY=your_gemini_api_key_here
+#
+# ==========================================
+# 3. HƯỚNG DẪN KHỞI TẠO DATABASE & VECTOR DB (Bằng Docker)
+# ==========================================
+# 1. Mở terminal và di chuyển vào thư mục backend:
+#    cd backend
+# 2. Chạy docker-compose để khởi tạo MySQL và ChromaDB:
+#    docker-compose up -d
+# 3. Docker sẽ tự động chạy script `schema.sql` và `seed.sql` để tạo sẵn
+#    dữ liệu (seed data) trong MySQL trong lần đầu khởi chạy.
+#
+# ==========================================
+# 4. HƯỚNG DẪN CÀI ĐẶT & CHẠY BACKEND (Django Server)
+# ==========================================
+# 1. Di chuyển vào thư mục backend/:
+#    cd backend
+# 2. Khởi tạo môi trường ảo (Virtual Environment):
+#    python -m venv venv
+# 3. Kích hoạt môi trường:
+#    (Mac/Linux): source venv/bin/activate
+#    (Windows): .\venv\Scripts\activate
+# 4. Cài đặt các thư viện Python (dùng luôn file này):
+#    pip install -r ../requirements.txt 
+# 5. (Tùy chọn) Chạy migrate của Django nếu có chỉnh sửa model:
+#    python manage.py makemigrations
+#    python manage.py migrate
+# 6. Khởi chạy server:
+#    python manage.py runserver
+#    -> Backend chạy tại: http://localhost:8000
+#
+# ==========================================
+# 5. HƯỚNG DẪN CÀI ĐẶT & CHẠY FRONTEND (React/Vite)
+# ==========================================
+# 1. Mở một terminal mới, di chuyển vào thư mục frontend/:
+#    cd frontend
+# 2. Cài đặt các thư viện node_modules:
+#    npm install
+#    (Lưu ý: Các dependencies chính bao gồm React 18, TailwindCSS, 
+#            shadcn-ui, react-router-dom, react-query, axios, v.v. 
+#            đã được cấu hình tự động trọn gói trong package.json).
+# 3. Khởi chạy ứng dụng web:
+#    npm run dev
+#    -> Frontend chạy tại: http://localhost:8080 (hoặc http://localhost:5173)
+#
+# ==========================================
+# 6. FILE CHỨNG NHẬN (CERTIFICATES) / KEYS KHÁC
+# ==========================================
+# - GOOGLE_CLIENT_ID (Dành cho Google Login) đã được nhúng sẵn vào settings.py
+# - Vui lòng không commit file .env (đã được đưa vào .gitignore)
+#
+# ==========================================
+# 7. PYTHON LIBRARIES (BACKEND PIP DEPENDENCIES)
+# ==========================================
+annotated-doc==0.0.4
+annotated-types==0.7.0
+anyio==4.13.0
+asgiref==3.11.1
+attrs==26.1.0
+bcrypt==5.0.0
+build==1.4.3
+certifi==2026.2.25
+charset-normalizer==3.4.7
+chromadb==1.5.7
+click==8.3.2
+colorama==0.4.6
+coloredlogs==15.0.1
+Django==5.2.13
+django-cors-headers==4.9.0
+durationpy==0.10
+exceptiongroup==1.3.1
+filelock==3.25.2
+flatbuffers==25.12.19
+fsspec==2026.3.0
+googleapis-common-protos==1.74.0
+grpcio==1.80.0
+h11==0.16.0
+hf-xet==1.4.3
+httpcore==1.0.9
+httptools==0.7.1
+httpx==0.28.1
+huggingface_hub==1.10.2
+humanfriendly==10.0
+idna==3.11
+importlib_metadata==8.7.1
+importlib_resources==7.1.0
+Jinja2==3.1.6
+joblib==1.5.3
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+kubernetes==35.0.0
+lxml==6.0.4
+markdown-it-py==4.0.0
+MarkupSafe==3.0.3
+mdurl==0.1.2
+mmh3==5.2.1
+mpmath==1.3.0
+mysqlclient==2.2.8
+networkx==3.4.2
+numpy==2.2.6
+oauthlib==3.3.1
+onnxruntime==1.23.2
+opentelemetry-api==1.41.0
+opentelemetry-exporter-otlp-proto-common==1.41.0
+opentelemetry-exporter-otlp-proto-grpc==1.41.0
+opentelemetry-proto==1.41.0
+opentelemetry-sdk==1.41.0
+opentelemetry-semantic-conventions==0.62b0
+orjson==3.11.8
+overrides==7.7.0
+packaging==26.0
+protobuf==6.33.6
+pybase64==1.4.3
+pydantic==2.13.0
+pydantic-settings==2.13.1
+pydantic_core==2.46.0
+Pygments==2.20.0
+PyJWT==2.12.1
+pypdf==6.10.1
+PyPika==0.51.1
+pyproject_hooks==1.2.0
+pyreadline3==3.5.4
+python-dateutil==2.9.0.post0
+python-docx==1.2.0
+python-dotenv==1.2.2
+PyYAML==6.0.3
+referencing==0.37.0
+regex==2026.4.4
+requests==2.33.1
+requests-oauthlib==2.0.0
+rich==15.0.0
+rpds-py==0.30.0
+safetensors==0.7.0
+scikit-learn==1.7.2
+scipy==1.15.3
+sentence-transformers==5.4.1
+shellingham==1.5.4
+six==1.17.0
+sqlparse==0.5.5
+sympy==1.14.0
+tenacity==9.1.4
+threadpoolctl==3.6.0
+tokenizers==0.22.2
+tomli==2.4.1
+torch==2.11.0
+tqdm==4.67.3
+transformers==5.5.4
+typer==0.24.1
+typing-inspection==0.4.2
+typing_extensions==4.15.0
+tzdata==2026.1
+urllib3==2.6.3
+uvicorn==0.44.0
+watchfiles==1.1.1
+websocket-client==1.9.0
+websockets==16.0
+zipp==3.23.1
+google-auth
+requests
+openpyxl==3.1.5
