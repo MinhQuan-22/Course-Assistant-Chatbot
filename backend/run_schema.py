@@ -1,1 +1,0 @@
-import mariadb; conn = mariadb.connect(user="root", password="root", host="127.0.0.1", port=3307, database="course_assistant_db"); cursor = conn.cursor(); with open("db/schema.sql", "r") as f: schema = f.read(); cursor.execute(schema); conn.commit(); conn.close()
