@@ -222,7 +222,7 @@ export default function TeacherQuizzesPage() {
           correct_answer: 'A', explanation: ''
         });
         loadQuizDetail(selectedQuiz); // Reload questions
-        fetchQuizzes(); // Update question count in list
+        fetchData(); // Update question count in list
       } else {
         const data = await res.json();
         await showAlert('Lỗi thêm câu hỏi: ' + data.error);
