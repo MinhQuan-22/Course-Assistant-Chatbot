@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppDialog } from '@/contexts/DialogContext';
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
@@ -34,6 +35,7 @@ type Question = {
 
 export default function TeacherQuizzesPage() {
   const { token } = useAuth();
+  const { showAlert, showConfirm } = useAppDialog();
   
   // State for List view
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -102,7 +104,7 @@ export default function TeacherQuizzesPage() {
         fetchData();
       } else {
         const data = await res.json();
-        alert('Lỗi: ' + data.error);
+        await showAlert('Lỗi: ' + data.error);
       }
     } catch (e) {
       console.error(e);
@@ -112,7 +114,7 @@ export default function TeacherQuizzesPage() {
   const handleCreateQuizAI = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newQuizTitle.trim() || !selectedClassId || !selectedDocId) {
-      alert("Vui lòng điền đủ Tên quiz, Lớp học và Tài liệu!");
+      await showAlert("Vui lòng điền đủ Tên quiz, Lớp học và Tài liệu!");
       return;
     }
     setIsGeneratingAI(true);
@@ -129,17 +131,17 @@ export default function TeacherQuizzesPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message);
+        await showAlert(data.message);
         setNewQuizTitle('');
         setSelectedClassId('');
         setSelectedDocId('');
         fetchData();
       } else {
-        alert('Lỗi AI: ' + data.error);
+        await showAlert('Lỗi AI: ' + data.error);
       }
     } catch (e) {
       console.error(e);
-      alert('Đã xảy ra lỗi khi gọi AI!');
+      await showAlert('Đã xảy ra lỗi khi gọi AI!');
     } finally {
       setIsGeneratingAI(false);
     }
@@ -185,7 +187,7 @@ export default function TeacherQuizzesPage() {
   };
 
   const handleDeleteQuiz = async (id: number) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa bài kiểm tra này?')) return;
+    if (!(await showConfirm('Bạn có chắc chắn muốn xóa bài kiểm tra này?'))) return;
     try {
       const res = await fetch(`${API_BASE_URL}/teacher/quizzes/${id}/`, {
         method: 'DELETE',
@@ -223,7 +225,7 @@ export default function TeacherQuizzesPage() {
         fetchQuizzes(); // Update question count in list
       } else {
         const data = await res.json();
-        alert('Lỗi thêm câu hỏi: ' + data.error);
+        await showAlert('Lỗi thêm câu hỏi: ' + data.error);
       }
     } catch (e) {
       console.error(e);
@@ -232,7 +234,7 @@ export default function TeacherQuizzesPage() {
 
   const handleDeleteQuestion = async (qId: number) => {
     if (!selectedQuiz) return;
-    if (!confirm('Xóa câu hỏi này?')) return;
+    if (!(await showConfirm('Xóa câu hỏi này?'))) return;
     try {
       const res = await fetch(`${API_BASE_URL}/teacher/quizzes/${selectedQuiz.id}/questions/${qId}/`, {
         method: 'DELETE',

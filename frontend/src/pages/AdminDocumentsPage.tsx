@@ -21,6 +21,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppDialog } from '@/contexts/DialogContext';
 
 const API = 'http://127.0.0.1:8000/api';
 
@@ -69,9 +70,10 @@ function DetailPanel({ doc, onClose, onAction }: {
   onAction: (docId: number, action: 'archive' | 'reprocess' | 'delete') => Promise<void>;
 }) {
   const [acting, setActing] = useState(false);
+  const { showConfirm } = useAppDialog();
 
   const act = async (action: 'archive' | 'reprocess' | 'delete') => {
-    if (action === 'delete' && !confirm(`Xoá tài liệu "${doc.name}"?\nHành động này không thể hoàn tác.`)) return;
+    if (action === 'delete' && !(await showConfirm(`Xoá tài liệu "${doc.name}"?\nHành động này không thể hoàn tác.`))) return;
     setActing(true);
     await onAction(doc.id, action);
     setActing(false);
@@ -148,6 +150,7 @@ function UploadModal({
   onDone: () => void;
 }) {
   const { token } = useAuth();
+  const { showAlert } = useAppDialog();
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [subjectId, setSubjectId] = useState('');
@@ -160,7 +163,7 @@ function UploadModal({
     : classSections;
 
   const handleUpload = async () => {
-    if (!file) { alert('Vui lòng chọn file!'); return; }
+    if (!file) { await showAlert('Vui lòng chọn file!'); return; }
     setUploading(true);
     setProgress('Đang upload...');
     const fd = new FormData();
@@ -178,7 +181,7 @@ function UploadModal({
       setProgress('Upload thành công! Đang xử lý ingestion...');
       setTimeout(() => { onDone(); }, 1200);
     } catch (e: any) {
-      alert(e.message);
+      await showAlert(e.message);
       setProgress('');
       setUploading(false);
     }
@@ -264,6 +267,7 @@ function UploadModal({
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function AdminDocumentsPage() {
   const { token } = useAuth();
+  const { showAlert, showConfirm } = useAppDialog();
   const h = { Authorization: `Bearer ${token}` };
 
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -350,7 +354,7 @@ export default function AdminDocumentsPage() {
         if (!res.ok) throw new Error(d.error || `${action} failed`);
       }
       fetchDocs(true);
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { await showAlert(e.message); }
   };
 
   const resetFilters = () => {
@@ -521,7 +525,7 @@ export default function AdminDocumentsPage() {
                         <Button
                           variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive"
                           onClick={async () => {
-                            if (!confirm(`Xoá "${doc.name}"?`)) return;
+                            if (!(await showConfirm(`Xoá "${doc.name}"?`))) return;
                             await handleAction(doc.id, 'delete');
                           }} title="Xoá"
                         >

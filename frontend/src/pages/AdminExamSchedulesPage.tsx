@@ -16,6 +16,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppDialog } from '@/contexts/DialogContext';
 
 const API = 'http://127.0.0.1:8000/api';
 
@@ -242,6 +243,7 @@ function CalendarGrid({
 // ─── Main ───────────────────────────────────────────────────────────────────────
 export default function AdminExamSchedulesPage() {
   const { token } = useAuth();
+  const { showAlert, showConfirm } = useAppDialog();
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
@@ -304,7 +306,7 @@ export default function AdminExamSchedulesPage() {
 
   const handleCreate = async (form: ExamForm) => {
     if (!form.subject_id || !form.exam_date || !form.start_time || !form.end_time) {
-      alert('Vui lòng nhập đầy đủ môn học, ngày và giờ thi!');
+      await showAlert('Vui lòng nhập đầy đủ môn học, ngày và giờ thi!');
       return;
     }
     setSaving(true);
@@ -328,7 +330,7 @@ export default function AdminExamSchedulesPage() {
       setShowModal(false);
       setSelectedDate(form.exam_date);
       fetchSchedules();
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { await showAlert(e.message); }
     finally { setSaving(false); }
   };
 
@@ -353,19 +355,19 @@ export default function AdminExamSchedulesPage() {
       if (!res.ok) throw new Error(data.error || 'Update failed');
       setEditExam(null);
       fetchSchedules();
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { await showAlert(e.message); }
     finally { setSaving(false); }
   };
 
   const handleDelete = async (exam: ExamSchedule) => {
-    if (!confirm(`Xoá lịch thi "${exam.subject_name}" ngày ${exam.exam_date}?`)) return;
+    if (!(await showConfirm(`Xoá lịch thi "${exam.subject_name}" ngày ${exam.exam_date}?`))) return;
     try {
       const res = await fetch(`${API}/admin/exam-schedules/${exam.id}/`, { method: 'DELETE', headers: h });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Delete failed');
       if (dayExams.length === 1) setSelectedDate(null);
       fetchSchedules();
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { await showAlert(e.message); }
   };
 
   const buildEditForm = (e: ExamSchedule): ExamForm => ({

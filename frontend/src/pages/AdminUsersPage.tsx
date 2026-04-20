@@ -10,6 +10,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppDialog } from '@/contexts/DialogContext';
 
 const API = 'http://127.0.0.1:8000/api';
 
@@ -213,6 +214,7 @@ function UserModal({
 
 export default function AdminUsersPage() {
   const { token } = useAuth();
+  const { showAlert, showConfirm } = useAppDialog();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<Role | 'all'>('all');
@@ -255,7 +257,7 @@ export default function AdminUsersPage() {
   // ── Create user ──────────────────────────────────────────────────────────────
   const handleCreate = async (form: UserForm) => {
     if (!form.name || !form.email || !form.password) {
-      alert('Vui lòng nhập đầy đủ Họ tên, Email và Mật khẩu!');
+      await showAlert('Vui lòng nhập đầy đủ Họ tên, Email và Mật khẩu!');
       return;
     }
     setSaving(true);
@@ -270,7 +272,7 @@ export default function AdminUsersPage() {
       setShowAddModal(false);
       fetchUsers();
     } catch (e: any) {
-      alert(e.message);
+      await showAlert(e.message);
     } finally {
       setSaving(false);
     }
@@ -304,7 +306,7 @@ export default function AdminUsersPage() {
       setEditUser(null);
       fetchUsers();
     } catch (e: any) {
-      alert(e.message);
+      await showAlert(e.message);
     } finally {
       setSaving(false);
     }
@@ -312,14 +314,14 @@ export default function AdminUsersPage() {
 
   // ── Delete user ──────────────────────────────────────────────────────────────
   const handleDelete = async (u: AdminUser) => {
-    if (!confirm(`Xoá tài khoản "${u.name}" (${u.email})? Thao tác này không thể hoàn tác.`)) return;
+    if (!(await showConfirm(`Xoá tài khoản "${u.name}" (${u.email})? Thao tác này không thể hoàn tác.`))) return;
     try {
       const res = await fetch(`${API}/admin/users/${u.id}/`, { method: 'DELETE', headers });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Delete failed');
       fetchUsers();
     } catch (e: any) {
-      alert(e.message);
+      await showAlert(e.message);
     }
   };
 
@@ -335,7 +337,7 @@ export default function AdminUsersPage() {
       if (!res.ok) throw new Error(data.error || 'Update failed');
       fetchUsers();
     } catch (e: any) {
-      alert(e.message);
+      await showAlert(e.message);
     }
   };
 
@@ -356,7 +358,7 @@ export default function AdminUsersPage() {
       });
       fetchUsers();
     } catch (e: any) {
-      alert(e.message);
+      await showAlert(e.message);
     } finally {
       setImporting(false);
       if (importRef.current) importRef.current.value = '';

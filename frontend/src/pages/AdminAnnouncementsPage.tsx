@@ -27,6 +27,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppDialog } from '@/contexts/DialogContext';
 
 const API = 'http://127.0.0.1:8000/api';
 const RECONNECT_DELAY_MS = 5000;
@@ -268,6 +269,7 @@ function SSEIndicator({ status }: { status: SSEStatus }) {
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function AdminAnnouncementsPage() {
   const { token } = useAuth();
+  const { showAlert, showConfirm } = useAppDialog();
   const h = { Authorization: `Bearer ${token}` };
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -382,7 +384,7 @@ export default function AdminAnnouncementsPage() {
 
   // ── Create ──────────────────────────────────────────────────────────────
   const handleCreate = async (form: AnnForm) => {
-    if (!form.title || !form.content) { alert('Tiêu đề và nội dung không được để trống!'); return; }
+    if (!form.title || !form.content) { await showAlert('Tiêu đề và nội dung không được để trống!'); return; }
     setSaving(true);
     try {
       const res = await fetch(`${API}/admin/announcements/`, {
@@ -399,7 +401,7 @@ export default function AdminAnnouncementsPage() {
       setShowModal(false);
       // SSE will push the new announcement automatically
       fetchAnnouncements(true);
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { await showAlert(e.message); }
     finally { setSaving(false); }
   };
 
@@ -421,19 +423,19 @@ export default function AdminAnnouncementsPage() {
       if (!res.ok) throw new Error(data.error || 'Update failed');
       setEditAnn(null);
       fetchAnnouncements(true);
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { await showAlert(e.message); }
     finally { setSaving(false); }
   };
 
   // ── Delete ──────────────────────────────────────────────────────────────
   const handleDelete = async (ann: Announcement) => {
-    if (!confirm(`Xoá thông báo "${ann.title}"?`)) return;
+    if (!(await showConfirm(`Xoá thông báo "${ann.title}"?`))) return;
     try {
       const res = await fetch(`${API}/admin/announcements/${ann.id}/`, { method: 'DELETE', headers: h });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Delete failed');
       fetchAnnouncements(true);
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { await showAlert(e.message); }
   };
 
   const buildEditForm = (a: Announcement): AnnForm => ({

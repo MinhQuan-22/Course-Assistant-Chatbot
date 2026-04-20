@@ -15,6 +15,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppDialog } from '@/contexts/DialogContext';
 
 const API = 'http://127.0.0.1:8000/api';
 
@@ -50,6 +51,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function ExcelImportButton({ token, entity, onImportSuccess }: { token: string, entity: string, onImportSuccess: () => void }) {
   const [importing, setImporting] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
+  const { showAlert } = useAppDialog();
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -68,11 +70,11 @@ function ExcelImportButton({ token, entity, onImportSuccess }: { token: string, 
       if (!res.ok) throw new Error(data.error || 'Import failed');
       
       const errMsgs = data.errors?.length ? `\nLỗi:\n${data.errors.map((e:any)=>`Dòng ${e.row}: ${e.error}`).join('\n')}` : '';
-      alert(`Import hoàn tất!\nThành công: ${data.success}\nThất bại: ${data.failed}${errMsgs}`);
+      await showAlert(`Import hoàn tất!\nThành công: ${data.success}\nThất bại: ${data.failed}${errMsgs}`);
       
       onImportSuccess();
     } catch (err: any) {
-      alert(`Import lỗi: ${err.message}`);
+      await showAlert(`Import lỗi: ${err.message}`);
     } finally {
       setImporting(false);
       if (importRef.current) importRef.current.value = '';
@@ -105,6 +107,7 @@ function SubjectsTab({ token }: { token: string }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ code: '', name: '', description: '', credits: '', is_active: true });
   const h = { Authorization: `Bearer ${token}` };
+  const { showAlert, showConfirm } = useAppDialog();
 
   const load = async () => {
     setLoading(true);
@@ -138,12 +141,12 @@ function SubjectsTab({ token }: { token: string }) {
       if (!r.ok) throw new Error(data.error);
       setShowModal(false);
       load();
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { await showAlert(e.message); }
     setSaving(false);
   };
 
   const del = async (s: Subject) => {
-    if (!confirm(`Xóa môn "${s.name}"?`)) return;
+    if (!(await showConfirm(`Xóa môn "${s.name}"?`))) return;
     await fetch(`${API}/admin/subjects/${s.id}/`, { method: 'DELETE', headers: h });
     load();
   };
@@ -230,6 +233,7 @@ function SectionsTab({ token }: { token: string }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ subject_id: '', section_code: '', semester: 'HK1', academic_year: '2024-2025', section_name: '', status: 'active' });
   const h = { Authorization: `Bearer ${token}` };
+  const { showAlert, showConfirm } = useAppDialog();
 
   const load = async () => {
     setLoading(true);
@@ -260,12 +264,12 @@ function SectionsTab({ token }: { token: string }) {
       const data = await r.json();
       if (!r.ok) throw new Error(data.error);
       setShowModal(false); load();
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { await showAlert(e.message); }
     setSaving(false);
   };
 
   const del = async (cs: Section) => {
-    if (!confirm(`Xóa lớp "${cs.section_name || cs.section_code}"?`)) return;
+    if (!(await showConfirm(`Xóa lớp "${cs.section_name || cs.section_code}"?`))) return;
     await fetch(`${API}/admin/class-sections/${cs.id}/`, { method: 'DELETE', headers: h });
     load();
   };
@@ -361,6 +365,7 @@ function AssignmentsTab({ token }: { token: string }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ class_section_id: '', teacher_profile_id: '' });
   const h = { Authorization: `Bearer ${token}` };
+  const { showAlert, showConfirm } = useAppDialog();
 
   const load = async () => {
     setLoading(true);
@@ -388,12 +393,12 @@ function AssignmentsTab({ token }: { token: string }) {
       const data = await r.json();
       if (!r.ok) throw new Error(data.error);
       setShowModal(false); load();
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { await showAlert(e.message); }
     setSaving(false);
   };
 
   const del = async (a: Assignment) => {
-    if (!confirm(`Gỡ phân công GV khỏi lớp "${a.section_name}"?`)) return;
+    if (!(await showConfirm(`Gỡ phân công GV khỏi lớp "${a.section_name}"?`))) return;
     await fetch(`${API}/admin/teaching-assignments/${a.id}/`, { method: 'DELETE', headers: h });
     load();
   };
@@ -475,6 +480,7 @@ function EnrollmentsTab({ token }: { token: string }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ class_section_id: '', student_profile_id: '' });
   const h = { Authorization: `Bearer ${token}` };
+  const { showAlert, showConfirm } = useAppDialog();
 
   const load = async () => {
     setLoading(true);
@@ -505,12 +511,12 @@ function EnrollmentsTab({ token }: { token: string }) {
       const data = await r.json();
       if (!r.ok) throw new Error(data.error);
       setShowModal(false); load();
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { await showAlert(e.message); }
     setSaving(false);
   };
 
   const del = async (e: EnrollmentItem) => {
-    if (!confirm(`Xoá ghi danh của "${e.student_name}" khỏi lớp "${e.section_name}"?`)) return;
+    if (!(await showConfirm(`Xoá ghi danh của "${e.student_name}" khỏi lớp "${e.section_name}"?`))) return;
     await fetch(`${API}/admin/enrollments/${e.id}/`, { method: 'DELETE', headers: h });
     load();
   };

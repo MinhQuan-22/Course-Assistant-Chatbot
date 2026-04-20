@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppDialog } from '@/contexts/DialogContext';
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
@@ -41,6 +42,7 @@ export default function DocumentsPage() {
   const [isUploading, setIsUploading] = useState(false);
 
   const { user, token } = useAuth();
+  const { showAlert, showConfirm } = useAppDialog();
   const canUpload = user?.role === 'teacher' || user?.role === 'admin';
 
   // Helper check for ownership. Admins can delete anything, teachers can only delete their own
@@ -125,14 +127,14 @@ export default function DocumentsPage() {
 
       await fetchDocuments();
     } catch (e: any) {
-      alert(`Upload failed: ${e.message}`);
+      await showAlert(`Upload failed: ${e.message}`);
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleDelete = async (docId: number) => {
-    if (!confirm('Bạn có chắc xoá tài liệu này không?')) return;
+    if (!(await showConfirm('Bạn có chắc xoá tài liệu này không?'))) return;
     try {
       const response = await fetch(`${API_BASE_URL}/admin/documents/${docId}/`, {
         method: 'DELETE',
@@ -144,10 +146,10 @@ export default function DocumentsPage() {
         fetchDocuments(); // Refresh
       } else {
         const data = await response.json();
-        alert(`Lỗi: ${data.error}`);
+        await showAlert(`Lỗi: ${data.error}`);
       }
     } catch (e: any) {
-      alert(`Xoá thất bại: ${e.message}`);
+      await showAlert(`Xoá thất bại: ${e.message}`);
     }
   };
 
