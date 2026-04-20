@@ -7,195 +7,324 @@ from ..models import ExamSchedule, Subject, SystemSetting
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 
-def generate_answer_stream(query: str, subject_id: int = None, history: str = ""):
-    # ── SETTINGS CONFIG ──
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _get_llm_config():
+    """Lấy cấu hình API key và model từ DB System Settings."""
     api_key_setting = SystemSetting.objects.filter(setting_key='openai_api_key').first()
     model_setting = SystemSetting.objects.filter(setting_key='ai_model').first()
-    
-    api_key = api_key_setting.setting_value if (api_key_setting and api_key_setting.setting_value) else ""
-    model_name = model_setting.setting_value if (model_setting and model_setting.setting_value) else "gpt-3.5-turbo"
-    
+
+    api_key = (api_key_setting.setting_value or "").strip() if api_key_setting else ""
+    model_name = (model_setting.setting_value or "gpt-3.5-turbo").strip() if model_setting else "gpt-3.5-turbo"
+
     is_openrouter = api_key.startswith("sk-or-v1-")
     if is_openrouter and "/" not in model_name:
         model_name = f"openai/{model_name}"
 
-    query_lower = query.lower()
-    contextualized_query = f"{history}\nUser: {query}".strip() if history else query
-    
-    # ── LLM ROUTER AGENT (INTENT CLASSIFICATION) ──
-    intent = "general_chat" # Default fallback
-    
-    if api_key:
-        llm_kwargs = {
-            "model": model_name,
-            "api_key": api_key,
-            "temperature": 0.0,
-            "max_tokens": 30
-        }
-        if is_openrouter:
-            llm_kwargs["base_url"] = "https://openrouter.ai/api/v1"
-            
-        try:
-            router_llm = ChatOpenAI(**llm_kwargs)
-            router_prompt = SystemMessage(
-                content="Phân loại câu hỏi của người dùng thành 1 trong 4 nhãn sau (TRẢ VỀ ĐÚNG MỘT NHÃN, KHÔNG GIẢI THÍCH): "
-                        "'exam_schedule' (chỉ các câu hỏi trực tiếp tra cứu về lịch thi, ngày thi, giờ thi, tháng thi, phòng thi, loại kỳ thi), "
-                        "'quiz_generation' (yêu cầu tạo quiz, giao bài tập trắc nghiệm, ôn tập kiểm tra), "
-                        "'document_qa' (tra cứu nội dung lý thuyết, bài giảng, khái niệm học thuật, tài liệu ôn tập), "
-                        "'general_chat' (hỏi ngày giờ hôm nay, hỏi thăm sức khỏe, chào hỏi thông thường, các vấn đề ngoài luồng học thuật)."
-            )
-            resp = router_llm.invoke([router_prompt, HumanMessage(content=contextualized_query)])
-            detected = resp.content.strip().lower()
-            if "exam_schedule" in detected: intent = "exam_schedule"
-            elif "quiz_generation" in detected or "quiz" in detected: intent = "quiz_generation"
-            elif "document_qa" in detected: intent = "document_qa"
-            else: intent = "general_chat"
-        except Exception as e:
-            intent = "general_chat"
-    else:
-        # Fallback to Mock Rules if no API key
-        if any(kw in query_lower for kw in ['tạo câu hỏi', 'bài tập', 'trắc nghiệm', 'quiz', 'ôn tập']):
-            intent = "quiz_generation"
-        elif any(kw in query_lower for kw in ['lịch thi', 'thi cuối kỳ', 'thi giữa kỳ', 'khi nào thi', 'phòng thi']):
-            intent = "exam_schedule"
-        elif any(kw in query_lower for kw in ['giờ', 'ngày mấy', 'chào', 'hello']):
-            intent = "general_chat"
+    return api_key, model_name, is_openrouter
 
-    # ── AGENT 1: Quiz Generation Action ──
+
+def _build_llm(api_key: str, model_name: str, is_openrouter: bool,
+               temperature: float = 0.1, streaming: bool = True,
+               max_tokens: int = None) -> ChatOpenAI:
+    """Tạo LLM instance với config nhất quán."""
+    kwargs = {
+        "model": model_name,
+        "api_key": api_key,
+        "temperature": temperature,
+        "streaming": streaming,
+    }
+    if max_tokens:
+        kwargs["max_tokens"] = max_tokens
+    if is_openrouter:
+        kwargs["base_url"] = "https://openrouter.ai/api/v1"
+    return ChatOpenAI(**kwargs)
+
+
+def _classify_intent(query: str, context: str, api_key: str, model_name: str, is_openrouter: bool) -> str:
+    """
+    Gọi LLM router để phân loại ý định câu hỏi thành một trong các nhãn chuẩn.
+    Fallback sang rule-based nếu không có API key hoặc bị exception.
+    """
+    if api_key:
+        try:
+            router_llm = _build_llm(api_key, model_name, is_openrouter,
+                                     temperature=0.0, streaming=False, max_tokens=20)
+            router_system = SystemMessage(content=(
+                "Phân loại câu hỏi thành ĐÚNG MỘT nhãn (chỉ trả về nhãn, không giải thích):\n"
+                "- 'exam_schedule': hỏi về lịch thi, ngày thi, giờ thi, phòng thi, loại kỳ thi\n"
+                "- 'quiz_generation': yêu cầu tạo câu hỏi trắc nghiệm, ôn tập, đề thi thử\n"
+                "- 'document_qa': hỏi về kiến thức, lý thuyết, khái niệm, nội dung bài giảng, tài liệu\n"
+                "- 'general_chat': chào hỏi, hỏi thăm, giới thiệu bản thân, câu hỏi ngoài học thuật"
+            ))
+            resp = router_llm.invoke([router_system, HumanMessage(content=context)])
+            detected = resp.content.strip().lower()
+            if "exam_schedule" in detected:
+                return "exam_schedule"
+            elif "quiz_generation" in detected or "quiz" in detected:
+                return "quiz_generation"
+            elif "document_qa" in detected:
+                return "document_qa"
+            else:
+                return "general_chat"
+        except Exception:
+            pass  # Fallback to rule-based below
+
+    # Rule-based fallback khi không có API key
+    q = query.lower()
+    if any(kw in q for kw in ['tạo câu hỏi', 'bài tập', 'trắc nghiệm', 'quiz', 'ôn tập', 'đề thi']):
+        return "quiz_generation"
+    if any(kw in q for kw in ['lịch thi', 'thi cuối kỳ', 'thi giữa kỳ', 'khi nào thi', 'phòng thi', 'ngày thi']):
+        return "exam_schedule"
+    if any(kw in q for kw in ['chào', 'hello', 'hi', 'bạn là ai', 'bây giờ là', 'hôm nay là']):
+        return "general_chat"
+    return "document_qa"  # Default: thử RAG trước
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RAG CONTEXT RETRIEVAL
+# ─────────────────────────────────────────────────────────────────────────────
+
+RAG_RELEVANCE_THRESHOLD = 1.35  # Ngưỡng khoảng cách vector: > threshold = không đủ liên quan
+RAG_TOP_K = 5                    # Số chunk lấy từ ChromaDB
+RAG_CONTEXT_CHUNKS = 3           # Số chunk dùng để build context cho LLM
+
+def _retrieve_rag_context(query: str, top_k: int = RAG_TOP_K):
+    """
+    Truy vấn ChromaDB, lọc kết quả theo ngưỡng khoảng cách, trả về:
+    - context_str: chuỗi đoạn văn bản đã ghép
+    - sources: danh sách metadata nguồn
+    - has_relevant: bool - có tìm được nội dung phù hợp không
+    """
+    results = query_chroma(query, top_k=top_k)
+    documents = results.get("documents", [[]])[0]
+    metadatas = results.get("metadatas", [[]])[0]
+    distances = results.get("distances", [[]])[0]
+
+    filtered = []
+    for doc, meta, dist in zip(documents, metadatas, distances):
+        if dist is None or dist > RAG_RELEVANCE_THRESHOLD:
+            continue
+        cleaned = " ".join(doc.split())
+        if len(cleaned) > 30:  # Bỏ các chunk quá ngắn (ký tự rác)
+            filtered.append((cleaned, meta, dist))
+
+    if not filtered:
+        return "", [], False
+
+    # Sắp xếp theo độ liên quan (khoảng cách nhỏ nhất = tốt nhất)
+    filtered.sort(key=lambda x: x[2])
+    top_chunks = filtered[:RAG_CONTEXT_CHUNKS]
+
+    context_parts = []
+    sources = []
+    for i, (chunk, meta, _) in enumerate(top_chunks, 1):
+        doc_name = meta.get("document_name", "Tài liệu không rõ tên")
+        page = meta.get("page")
+        page_str = f" (Trang {page})" if page else ""
+        context_parts.append(f"[Đoạn {i} – {doc_name}{page_str}]\n{chunk}")
+        if i == 1:  # Source chính (chunk liên quan nhất)
+            sources.append({
+                "document_name": doc_name,
+                "page": page,
+                "chunk_index": meta.get("chunk_index"),
+            })
+
+    context_str = "\n\n".join(context_parts)
+    return context_str, sources, True
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SYSTEM PROMPTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+TA_PERSONA = (
+    "Bạn là 3N – Trợ Giảng AI của hệ thống Course Assistant, đóng vai một người trợ giảng thân thiện, "
+    "nhiệt tình và hiểu biết sâu về môn học. Phong cách trả lời: tự nhiên như đang nói chuyện với sinh viên, "
+    "giải thích rõ ràng, dùng ví dụ cụ thể khi cần, và luôn khuyến khích sinh viên học hỏi thêm. "
+    "Trả lời bằng tiếng Việt, có thể dùng Markdown để trình bày mạch lạc.\n"
+)
+
+def _build_system_prompt_exam(context_str: str, now_str: str) -> str:
+    return (
+        TA_PERSONA +
+        f"Hôm nay là: {now_str}.\n\n"
+        "Dưới đây là toàn bộ lịch thi được hệ thống ghi nhận:\n"
+        f"```\n{context_str}\n```\n\n"
+        "Hướng dẫn trả lời:\n"
+        "- Trả lời CHÍNH XÁC theo dữ liệu trên, phân biệt rõ giữa kỳ / cuối kỳ / bổ sung.\n"
+        "- Nếu sinh viên hỏi một mốc thời gian cụ thể (ví dụ: tháng 5, tháng 6), hãy lọc và chỉ đề cập"
+        "  những kỳ thi thực sự xảy ra trong khoảng đó.\n"
+        "- Nếu không có kỳ thi nào cho điều kiện đó, hãy nói rõ ràng là chưa có.\n"
+        "- Đừng bịa thêm thông tin ngoài danh sách trên.\n"
+        "- Giao tiếp thân thiện, tránh liệt kê máy móc."
+    )
+
+def _build_system_prompt_rag(context_str: str) -> str:
+    return (
+        TA_PERSONA +
+        "Bạn đã tìm thấy các đoạn tài liệu liên quan sau đây từ bộ tài liệu khóa học:\n\n"
+        f"{context_str}\n\n"
+        "Hướng dẫn trả lời:\n"
+        "- Ưu tiên giải thích dựa trên nội dung tài liệu trên.\n"
+        "- Bạn CÓ THỂ bổ sung thêm kiến thức nền tảng của mình nếu nó giúp sinh viên hiểu rõ hơn, "
+        "  nhưng hãy làm rõ phần nào là từ tài liệu, phần nào là kiến thức chung.\n"
+        "- Trình bày sinh động, có ví dụ minh họa nếu phù hợp.\n"
+        "- Cuối câu trả lời, có thể gợi ý sinh viên đọc thêm phần liên quan trong tài liệu."
+    )
+
+def _build_system_prompt_ai_only() -> str:
+    return (
+        TA_PERSONA +
+        "Câu hỏi này không tìm thấy trong tài liệu khóa học hiện có, nhưng đây là một câu hỏi kiến thức "
+        "học thuật mà bạn có thể trả lời từ kiến thức nền tảng của mình.\n\n"
+        "Hướng dẫn:\n"
+        "- Trả lời tận tình và đầy đủ như một trợ giảng giỏi.\n"
+        "- Thông báo nhẹ nhàng rằng câu trả lời dựa trên kiến thức tổng quát, vì tài liệu khóa học "
+        "  chưa đề cập đến chủ đề này.\n"
+        "- Gợi ý sinh viên hỏi giảng viên nếu cần câu trả lời chính thống theo giáo trình."
+    )
+
+def _build_system_prompt_general(now_str: str) -> str:
+    return (
+        TA_PERSONA +
+        f"Thời gian hiện tại là: {now_str}.\n\n"
+        "Đây là một cuộc hội thoại thông thường. Hãy trả lời thân thiện và tự nhiên. "
+        "Nếu sinh viên có vẻ muốn hỏi về nội dung học tập, hãy khuyến khích họ đặt câu hỏi cụ thể hơn "
+        "để mình có thể tìm trong tài liệu giúp nhé."
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MAIN GENERATOR
+# ─────────────────────────────────────────────────────────────────────────────
+
+def generate_answer_stream(query: str, subject_id: int = None, history: str = ""):
+    """
+    Generator chính: phân loại intent → xây context → gọi LLM stream → yield chunks.
+    Hybrid strategy:
+      - 'exam_schedule'  → luôn tra DB, LLM format
+      - 'quiz_generation' → tạo quiz từ service
+      - 'document_qa'    → RAG first; nếu không có tài liệu liên quan → AI dùng kiến thức riêng
+      - 'general_chat'   → LLM thuần túy
+    """
+    api_key, model_name, is_openrouter = _get_llm_config()
+    now_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+
+    # Build contextualized query (kèm lịch sử hội thoại)
+    contextualized_query = f"{history}\nUser: {query}".strip() if history else query
+
+    # ── STEP 1: Intent Classification ─────────────────────────────────────────
+    intent = _classify_intent(query, contextualized_query, api_key, model_name, is_openrouter)
+
+    # ── STEP 2: Quiz Generation (standalone, không cần LLM) ──────────────────
     if intent == "quiz_generation":
         count = 5
-        if '3' in query: count = 3
-        elif '10' in query: count = 10
-        elif '15' in query: count = 15
-        
+        for n in [3, 10, 15, 7]:
+            if str(n) in query:
+                count = n
+                break
+
         questions = generate_quiz(question_count=count)
-        quiz_json = json.dumps(questions, ensure_ascii=False)
-        
-        answer_text = f"Tôi đã phân tích tự động yêu cầu của bạn bằng AI Router và tạo ra {len(questions)} câu hỏi ôn tập.\nBạn có thể làm bài ngay dưới đây:\n\n[QUIZ_DATA]{quiz_json}[/QUIZ_DATA]"
-        
+        if questions:
+            quiz_json = json.dumps(questions, ensure_ascii=False)
+            answer_text = (
+                f"Mình đã tạo sẵn {len(questions)} câu hỏi ôn tập cho bạn! 📝\n"
+                f"Hãy bấm vào từng câu để chọn đáp án nhé:\n\n"
+                f"[QUIZ_DATA]{quiz_json}[/QUIZ_DATA]"
+            )
+        else:
+            answer_text = (
+                "Hiện tại bộ tài liệu chưa đủ dữ liệu để tự động tạo câu hỏi trắc nghiệm. "
+                "Bạn có thể thử lại sau khi giảng viên upload thêm tài liệu lên hệ thống nhé!"
+            )
+
         for i in range(0, len(answer_text), 10):
             yield {"text": answer_text[i:i+10], "sources": []}
             time.sleep(0.01)
         return
 
-    extracted_sources = []
-    now_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
-
-    # ── AGENT 2: Define System Prompt based on Intent ──
+    # ── STEP 3: Exam Schedule (DB lookup) ────────────────────────────────────
     if intent == "exam_schedule":
-        yield {"text": "AI Router đã xác định bạn muốn tra cứu lịch thi. Đang tổng hợp dữ liệu hành chính và phản hồi...\n\n", "sources": []}
-        time.sleep(0.5)
-        
-        exam_query = ExamSchedule.objects.all().order_by('exam_date')
+        exam_query = ExamSchedule.objects.all().order_by("exam_date")
         if subject_id:
             exam_query = exam_query.filter(class_section__subject_id=subject_id)
-            
+
         exams = list(exam_query)
-        context_str = f"Thời gian thực tế của hệ thống hiện tại là: {now_str}.\nDANH SÁCH LỊCH THI TRONG CƠ SỞ DỮ LIỆU CỦA USER ĐANG HỎI:\n"
         if not exams:
-            context_str += "Hiện tại chưa có lịch thi nào được công bố cho hệ thống."
+            context_str = "Hiện tại chưa có lịch thi nào được công bố trong hệ thống."
         else:
+            exam_type_map = {
+                "midterm": "Thi giữa kỳ",
+                "final":   "Thi cuối kỳ",
+                "makeup":  "Thi bổ sung / Học lại",
+                "other":   "Kỳ thi khác",
+            }
+            lines = []
             for ex in exams:
-                exam_type_dict = {'midterm': 'Thi giữa kỳ', 'final': 'Thi cuối kỳ', 'makeup': 'Thi bổ sung', 'other': 'Thi Khác'}
-                exam_name = exam_type_dict.get(ex.exam_type, 'Kỳ thi')
-                class_str = f"Lớp {ex.class_section.section_name or ex.class_section.section_code}" if ex.class_section else "Chung toàn khóa"
-                context_str += f"- {exam_name} môn {ex.subject.name} ({class_str}): Ngày {ex.exam_date.strftime('%d/%m/%Y')} lúc {ex.start_time.strftime('%H:%M')} tại {ex.room or 'Chưa phân phòng'}.\n"
-        
-        system_prompt = (
-            "Bạn là trợ lý tư vấn học vụ AI. Người dùng đang hỏi về lịch thi.\n"
-            f"Dưới đây là DỮ LIỆU LỊCH THI DUY NHẤT mà bạn được biết:\n\"\"\"{context_str}\"\"\"\n"
-            "Yêu cầu xử lý triệt để:\n"
-            "- Trả lời CHÍNH XÁC dựa vào dữ liệu trên. Phải tự động rà soát phân biệt rõ loại hình thi như giữa kỳ (midterm) và cuối kỳ (final) mà người dùng yêu cầu.\n"
-            "- Nếu người dùng hỏi 1 tháng/loại thi mà không có thông tin trong Bối cảnh, phải trả lời rõ ràng là KHÔNG có kỳ thi đó.\n"
-            "- Bạn là một AI thông minh nên hãy ghép nối Logic các thông tin sao cho tự nhiên nhất."
-        )
+                etype = exam_type_map.get(ex.exam_type, "Kỳ thi")
+                cls = (
+                    f"Lớp {ex.class_section.section_name or ex.class_section.section_code}"
+                    if ex.class_section else "Chung toàn khóa"
+                )
+                room = ex.room or "Chưa phân phòng"
+                note = f" – {ex.note}" if ex.note else ""
+                lines.append(
+                    f"• {etype} | Môn: {ex.subject.name} | {cls} | "
+                    f"Ngày: {ex.exam_date.strftime('%d/%m/%Y')} | "
+                    f"Giờ: {ex.start_time.strftime('%H:%M')}–{ex.end_time.strftime('%H:%M')} | "
+                    f"Phòng: {room}{note}"
+                )
+            context_str = "\n".join(lines)
 
+        system_prompt = _build_system_prompt_exam(context_str, now_str)
+        extracted_sources = []
+
+    # ── STEP 4: General Chat ─────────────────────────────────────────────────
     elif intent == "general_chat":
-        system_prompt = (
-            "Bạn là 3N Chatbot, một trợ lý AI giáo dục thân thiện.\n"
-            f"Thông tin thời gian thực lúc này: {now_str}.\n"
-            "Hãy trả lời câu hỏi giao tiếp thông thường của người học bằng thái độ nền nã và thân thiện.\n"
-            "Lưu ý bổ sung: Nếu nhận thấy người dùng muốn hỏi sâu về lịch thi hay kiến thức, hãy gợi ý họ đặt câu hỏi rõ ràng hơn để Router kích hoạt tra cứu cơ sở dữ liệu."
-        )
+        system_prompt = _build_system_prompt_general(now_str)
+        extracted_sources = []
 
-    else:
-        # Default document_qa RAG Flow
-        results = query_chroma(contextualized_query, top_k=5)
+    # ── STEP 5: Document QA – Hybrid RAG + AI Fallback ───────────────────────
+    else:  # document_qa
+        context_str, extracted_sources, has_relevant = _retrieve_rag_context(contextualized_query)
 
-        documents = results.get("documents", [[]])[0]
-        metadatas = results.get("metadatas", [[]])[0]
-        distances = results.get("distances", [[]])[0]
-
-        if not documents:
-            for word in "Tôi không tìm thấy thông tin liên quan trong hệ thống tài liệu hiện tại.".split(" "):
-                yield {"text": word + " ", "sources": []}
-                time.sleep(0.05)
-            return
-
-        filtered = []
-        for doc, meta, dist in zip(documents, metadatas, distances):
-            if dist is not None and dist > 1.1: continue
-            cleaned = " ".join(doc.split())
-            filtered.append((cleaned, meta, dist))
-
-        if not filtered:
-            for word in "Nội dung bạn hỏi khá sâu hoặc không có trong tài liệu. Vui lòng cung cấp thêm từ khóa cụ thể.".split(" "):
-                yield {"text": word + " ", "sources": []}
-                time.sleep(0.05)
-            return
-
-        best_chunk, best_meta, _ = filtered[0]
-        
-        extracted_sources = [{
-            "document_name": best_meta.get("document_name"),
-            "page": best_meta.get("page"),
-            "chunk_index": best_meta.get("chunk_index"),
-        }]
-        
-        system_prompt = (
-            "Bạn là trợ lý AI giáo dục. Hãy trả lời câu hỏi của sinh viên dựa trên tài liệu được cung cấp.\n"
-            f"Tài liệu trích dẫn:\n\"\"\"{best_chunk}\"\"\"\n\n"
-            "Yêu cầu:\n"
-            "- Ưu tiên trả lời dựa vào thông tin trong tài liệu.\n"
-            "- Trả lời bằng tiếng Việt.\n"
-            "- Trình bày mạch lạc, có thể dùng Markdown."
-        )
-
-
-    # ── AGENT EXECUTION (CALL REAL LLM) ──
-    if not api_key:
-        mock_resp = "Hệ thống đang chạy ở Mock Mode (chưa có API Key). "
-        if intent == "exam_schedule":
-            mock_resp += "Dữ liệu lịch thi đã được lấy nhưng không có AI LLM để format và filter."
-        elif intent == "general_chat":
-            mock_resp += f"Bây giờ là lúc {now_str}."
+        if has_relevant:
+            system_prompt = _build_system_prompt_rag(context_str)
         else:
-            mock_resp += f"Dựa trên tài liệu khóa học (Mock RAG)..."
-            
-        for word in mock_resp.split(" "):
+            # Không tìm thấy tài liệu liên quan → AI trả lời từ kiến thức riêng
+            system_prompt = _build_system_prompt_ai_only()
+
+    # ── STEP 6: LLM Execution ────────────────────────────────────────────────
+    if not api_key:
+        # Mock mode khi chưa có API key
+        if intent == "exam_schedule":
+            mock = f"[Mock Mode] Đã lấy được dữ liệu lịch thi nhưng chưa có AI API Key để phân tích."
+        elif intent == "general_chat":
+            mock = f"[Mock Mode] Bây giờ là {now_str}. Chào bạn! 👋"
+        else:
+            mock = "[Mock Mode] Chưa có API Key. Hệ thống RAG đã truy vấn tài liệu nhưng cần AI để tổng hợp câu trả lời."
+
+        for word in mock.split(" "):
             yield {"text": word + " ", "sources": extracted_sources}
             time.sleep(0.02)
         return
 
-    llm_kwargs = {
-        "model": model_name,
-        "api_key": api_key,
-        "temperature": 0.1,
-        "streaming": True
-    }
-    if is_openrouter:
-        llm_kwargs["base_url"] = "https://openrouter.ai/api/v1"
-
     try:
-        llm = ChatOpenAI(**llm_kwargs)
+        llm = _build_llm(api_key, model_name, is_openrouter, temperature=0.3, streaming=True)
         messages = [
             SystemMessage(content=system_prompt),
-            HumanMessage(content=contextualized_query)
+            HumanMessage(content=contextualized_query),
         ]
-        
         for chunk in llm.stream(messages):
             if chunk.content:
                 yield {"text": chunk.content, "sources": extracted_sources}
-                
+
     except Exception as e:
-        yield {"text": f"\n\n[System Error: LLM API failed - {str(e)}]", "sources": extracted_sources}
+        yield {
+            "text": f"\n\n⚠️ Xin lỗi, mình gặp sự cố kết nối với AI lúc này. Lỗi kỹ thuật: `{str(e)}`",
+            "sources": extracted_sources,
+        }
