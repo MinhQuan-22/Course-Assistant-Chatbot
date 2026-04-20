@@ -1,4 +1,3 @@
-import {
   MessageSquare,
   BookOpen,
   FileText,
@@ -10,6 +9,7 @@ import {
   ClipboardList,
   Plus,
   BookMarked,
+  CalendarDays,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -29,10 +29,11 @@ import {
 } from '@/components/ui/sidebar';
 
 const studentNav = [
-  { title: 'Chat', url: '/chat', icon: MessageSquare },
-  { title: 'Chat History', url: '/history', icon: FileText },
-  { title: 'Quiz', url: '/quiz', icon: ClipboardList },
-  { title: 'Documents', url: '/documents', icon: BookOpen },
+  { title: 'Chat',        url: '/chat',     icon: MessageSquare },
+  { title: 'Chat History',url: '/history',  icon: FileText      },
+  { title: 'Quiz',        url: '/quiz',     icon: ClipboardList },
+  { title: 'Lịch thi',   url: '/exam',     icon: CalendarDays  },
+  { title: 'Documents',   url: '/documents',icon: BookOpen      },
 ];
 
 const teacherNav = [

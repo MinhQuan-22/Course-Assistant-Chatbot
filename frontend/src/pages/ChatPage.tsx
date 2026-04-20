@@ -133,7 +133,12 @@ export default function ChatPage() {
         setIsLoading(true);
 
         const response = await fetch(
-          `${API_BASE_URL}/chat/conversations/${conversationId}/`
+          `${API_BASE_URL}/chat/conversations/${conversationId}/`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
         );
         const data = await response.json();
 

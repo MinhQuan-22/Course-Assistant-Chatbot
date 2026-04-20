@@ -38,7 +38,7 @@ from .views_teacher import (
     teacher_quizzes_generate_ai
 )
 from .views_student import (
-    student_subjects, student_quizzes, student_quiz_detail
+    student_subjects, student_quizzes, student_quiz_detail, student_exam_schedules
 )
 
 urlpatterns = [
@@ -125,6 +125,7 @@ urlpatterns = [
 
     # ── Student ───────────────────────────────────────────────────────────────
     path('student/subjects/', student_subjects),
+    path('student/exam-schedules/', student_exam_schedules),
     path('student/quizzes/', student_quizzes),
     path('student/quizzes/<int:quiz_id>/', student_quiz_detail),
 

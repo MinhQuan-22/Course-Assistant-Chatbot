@@ -12,6 +12,7 @@ import ChatPage from "./pages/ChatPage";
 import DocumentsPage from "./pages/DocumentsPage";
 import HistoryPage from "./pages/HistoryPage";
 import QuizPage from "./pages/QuizPage";
+import StudentExamPage from "./pages/StudentExamPage";
 import TeacherQuizzesPage from "./pages/TeacherQuizzesPage";
 import StatsPage from "./pages/StatsPage";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -101,6 +102,7 @@ function AppRoutes() {
       <Route path="/chat"    element={<ProtectedRoute allowedRoles={["student"]}><ChatPage /></ProtectedRoute>} />
       <Route path="/history" element={<ProtectedRoute allowedRoles={["student"]}><HistoryPage /></ProtectedRoute>} />
       <Route path="/quiz"    element={<ProtectedRoute allowedRoles={["student"]}><QuizPage /></ProtectedRoute>} />
+      <Route path="/exam"    element={<ProtectedRoute allowedRoles={["student"]}><StudentExamPage /></ProtectedRoute>} />
 
       {/* Student + Teacher + Admin */}
       <Route path="/documents" element={<ProtectedRoute allowedRoles={["student", "teacher", "admin"]}><DocumentsPage /></ProtectedRoute>} />

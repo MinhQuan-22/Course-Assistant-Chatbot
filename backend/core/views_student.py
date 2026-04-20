@@ -5,7 +5,7 @@ from django.utils import timezone
 from .auth_utils import decode_jwt_token
 from .models import (
     User, Subject, ClassSection, Enrollment, StudentProfile,
-    Quiz, QuizQuestion, QuizAttempt, QuizAnswer
+    Quiz, QuizQuestion, QuizAttempt, QuizAnswer, ExamSchedule
 )
 
 def _get_student(request):
@@ -139,5 +139,70 @@ def student_quiz_detail(request, quiz_id):
                 "total": total,
                 "details": detailed_results
             })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+def student_exam_schedules(request):
+    """
+    GET /api/student/exam-schedules/?month=YYYY-MM
+    Trả về lịch thi của các lớp học phần mà sinh viên đang đăng ký.
+    Chỉ cho phép GET – Sinh viên không được thêm/sửa/xóa lịch thi.
+    """
+    if request.method != "GET":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    user, err = _get_student(request)
+    if err:
+        return err
+
+    try:
+        sp = StudentProfile.objects.filter(user=user).first()
+        if not sp:
+            return JsonResponse([], safe=False)
+
+        # Lấy danh sách class_section mà sinh viên đăng ký
+        enrolled_section_ids = Enrollment.objects.filter(
+            student_profile=sp, status="enrolled"
+        ).values_list("class_section_id", flat=True)
+
+        # Lọc theo tháng nếu có query param ?month=YYYY-MM
+        month_param = request.GET.get("month", "")
+        exam_qs = ExamSchedule.objects.filter(
+            class_section_id__in=enrolled_section_ids
+        ).select_related("subject", "class_section").order_by("exam_date", "start_time")
+
+        if month_param:
+            try:
+                year_str, mon_str = month_param.split("-")
+                exam_qs = exam_qs.filter(
+                    exam_date__year=int(year_str),
+                    exam_date__month=int(mon_str),
+                )
+            except ValueError:
+                pass  # Bỏ qua nếu format sai, trả về toàn bộ
+
+        data = []
+        for ex in exam_qs:
+            data.append({
+                "id":                 ex.id,
+                "subject_id":         ex.subject.id,
+                "subject_code":       ex.subject.code,
+                "subject_name":       ex.subject.name,
+                "class_section_id":   ex.class_section.id if ex.class_section else None,
+                "class_section_name": (
+                    ex.class_section.section_name or ex.class_section.section_code
+                ) if ex.class_section else None,
+                "exam_type":          ex.exam_type,
+                "exam_date":          ex.exam_date.strftime("%Y-%m-%d"),
+                "start_time":         ex.start_time.strftime("%H:%M:%S"),
+                "end_time":           ex.end_time.strftime("%H:%M:%S"),
+                "room":               ex.room,
+                "note":               ex.note,
+            })
+
+        return JsonResponse(data, safe=False)
+
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
