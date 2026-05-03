@@ -51,6 +51,32 @@ Trước khi cài đặt, máy tính cần có sẵn:
 
 
 ================================================================================
+                    LƯU Ý QUAN TRỌNG VỀ CÁC THỨ MỤC ĐÃ XÓA
+================================================================================
+
+⚠️ Để giảm dung lượng project trên server, các thư mục sau đã được xóa:
+
+1. backend/venv/ - Virtual environment Python (~1.2GB)
+   → Cần tạo lại bằng lệnh: python -m venv venv
+
+2. frontend/node_modules/ - Dependencies Node.js (~287MB)
+   → Cần cài lại bằng lệnh: npm install
+
+3. frontend/dist/ - Build output (~704KB)
+   → Sẽ tự động tạo khi chạy: npm run dev
+
+4. Các file __pycache__/ - Python cache files
+   → Sẽ tự động tạo khi chạy Backend
+
+5. Các file .DS_Store - macOS system files
+   → Không cần thiết cho project
+
+📊 KẾT QUẢ: Dung lượng project giảm từ ~1.5GB xuống còn ~42MB (giảm 97%)
+
+LƯU Ý: Các bước cài đặt bên dưới đã bao gồm việc tạo lại các thư mục này.
+
+
+================================================================================
                     BƯỚC 1: CÀI ĐẶT CƠ SỞ DỮ LIỆU (DATABASE)
 ================================================================================
 
