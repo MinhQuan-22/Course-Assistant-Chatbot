@@ -1,9 +1,7 @@
 from django.db import models
 
 
-# ────────────────────────────────────────────────────────────
 # 1.  USERS
-# ────────────────────────────────────────────────────────────
 class User(models.Model):
     ROLE_CHOICES = [
         ('student', 'Student'),
@@ -30,9 +28,7 @@ class User(models.Model):
         return self.name
 
 
-# ────────────────────────────────────────────────────────────
 # 2.  TEACHER PROFILES
-# ────────────────────────────────────────────────────────────
 class TeacherProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, db_column='user_id', related_name='teacher_profile')
     teacher_code = models.CharField(max_length=50, unique=True)
@@ -50,9 +46,7 @@ class TeacherProfile(models.Model):
         return f"{self.teacher_code} – {self.user.name}"
 
 
-# ────────────────────────────────────────────────────────────
 # 3.  STUDENT PROFILES
-# ────────────────────────────────────────────────────────────
 class StudentProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, db_column='user_id', related_name='student_profile')
     student_code = models.CharField(max_length=50, unique=True)
@@ -70,9 +64,7 @@ class StudentProfile(models.Model):
         return f"{self.student_code} – {self.user.name}"
 
 
-# ────────────────────────────────────────────────────────────
 # 4.  SUBJECTS
-# ────────────────────────────────────────────────────────────
 class Subject(models.Model):
     code = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=255)
@@ -90,9 +82,7 @@ class Subject(models.Model):
         return f"{self.code} – {self.name}"
 
 
-# ────────────────────────────────────────────────────────────
 # 5.  CLASS SECTIONS
-# ────────────────────────────────────────────────────────────
 class ClassSection(models.Model):
     STATUS_CHOICES = [
         ('active', 'Active'),
@@ -119,9 +109,7 @@ class ClassSection(models.Model):
         return f"{self.section_name or self.section_code} ({self.semester}/{self.academic_year})"
 
 
-# ────────────────────────────────────────────────────────────
 # 6.  TEACHING ASSIGNMENTS
-# ────────────────────────────────────────────────────────────
 class TeachingAssignment(models.Model):
     class_section = models.OneToOneField(ClassSection, on_delete=models.CASCADE, db_column='class_section_id', related_name='assignment')
     teacher_profile = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE, db_column='teacher_profile_id')
@@ -134,9 +122,7 @@ class TeachingAssignment(models.Model):
         managed = False
 
 
-# ────────────────────────────────────────────────────────────
 # 7.  ENROLLMENTS
-# ────────────────────────────────────────────────────────────
 class Enrollment(models.Model):
     STATUS_CHOICES = [
         ('enrolled', 'Enrolled'),
@@ -158,9 +144,7 @@ class Enrollment(models.Model):
         unique_together = [('class_section', 'student_profile')]
 
 
-# ────────────────────────────────────────────────────────────
 # 8.  IMPORT BATCHES
-# ────────────────────────────────────────────────────────────
 class ImportBatch(models.Model):
     ENTITY_CHOICES = [
         ('users', 'Users (mixed roles)'),
@@ -187,9 +171,7 @@ class ImportBatch(models.Model):
         managed = False
 
 
-# ────────────────────────────────────────────────────────────
 # 9.  IMPORT BATCH ERRORS
-# ────────────────────────────────────────────────────────────
 class ImportBatchError(models.Model):
     batch = models.ForeignKey(ImportBatch, on_delete=models.CASCADE, db_column='batch_id', related_name='errors')
     row_number = models.IntegerField(db_column='row_number')
@@ -202,9 +184,7 @@ class ImportBatchError(models.Model):
         managed = False
 
 
-# ────────────────────────────────────────────────────────────
 # 10. DOCUMENTS
-# ────────────────────────────────────────────────────────────
 class Document(models.Model):
     STATUS_CHOICES = [
         ('processing', 'Processing'),
@@ -231,9 +211,7 @@ class Document(models.Model):
         return self.name
 
 
-# ────────────────────────────────────────────────────────────
 # 11. CONVERSATIONS
-# ────────────────────────────────────────────────────────────
 class Conversation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
     title = models.CharField(max_length=255, null=True, blank=True)
@@ -245,9 +223,7 @@ class Conversation(models.Model):
         managed = False
 
 
-# ────────────────────────────────────────────────────────────
 # 12. MESSAGES
-# ────────────────────────────────────────────────────────────
 class Message(models.Model):
     ROLE_CHOICES = [('user', 'User'), ('assistant', 'Assistant')]
 
@@ -262,9 +238,7 @@ class Message(models.Model):
         managed = False
 
 
-# ────────────────────────────────────────────────────────────
 # 13. QUIZZES
-# ────────────────────────────────────────────────────────────
 class Quiz(models.Model):
     SOURCE_CHOICES = [('teacher_created', 'Teacher Created'), ('ai_generated', 'AI Generated')]
 
@@ -284,9 +258,7 @@ class Quiz(models.Model):
         managed = False
 
 
-# ────────────────────────────────────────────────────────────
 # 14. QUIZ QUESTIONS
-# ────────────────────────────────────────────────────────────
 class QuizQuestion(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, db_column='quiz_id')
     question = models.TextField()
@@ -302,9 +274,7 @@ class QuizQuestion(models.Model):
         managed = False
 
 
-# ────────────────────────────────────────────────────────────
 # 15. QUIZ ATTEMPTS
-# ────────────────────────────────────────────────────────────
 class QuizAttempt(models.Model):
     STATUS_CHOICES = [('in_progress','In Progress'), ('submitted','Submitted'), ('graded','Graded')]
 
@@ -324,9 +294,7 @@ class QuizAttempt(models.Model):
         unique_together = [('user', 'quiz')]
 
 
-# ────────────────────────────────────────────────────────────
 # 16. QUIZ ANSWERS
-# ────────────────────────────────────────────────────────────
 class QuizAnswer(models.Model):
     attempt = models.ForeignKey(QuizAttempt, on_delete=models.CASCADE, db_column='attempt_id')
     question = models.ForeignKey(QuizQuestion, on_delete=models.CASCADE, db_column='question_id')
@@ -338,9 +306,7 @@ class QuizAnswer(models.Model):
         managed = False
 
 
-# ────────────────────────────────────────────────────────────
 # 17. EXAM SCHEDULES
-# ────────────────────────────────────────────────────────────
 class ExamSchedule(models.Model):
     EXAM_TYPE_CHOICES = [
         ('midterm', 'Midterm'), ('final', 'Final'),
@@ -363,9 +329,7 @@ class ExamSchedule(models.Model):
         managed = False
 
 
-# ────────────────────────────────────────────────────────────
 # 18. SYSTEM SETTINGS
-# ────────────────────────────────────────────────────────────
 class SystemSetting(models.Model):
     setting_key = models.CharField(max_length=100, unique=True)
     setting_value = models.TextField()
@@ -381,9 +345,7 @@ class SystemSetting(models.Model):
         return f"{self.setting_key} = {self.setting_value}"
 
 
-# ────────────────────────────────────────────────────────────
 # 19. ANNOUNCEMENTS
-# ────────────────────────────────────────────────────────────
 class Announcement(models.Model):
     TARGET_CHOICES = [('all','All'), ('student','Student'), ('teacher','Teacher'), ('admin','Admin')]
 
@@ -404,9 +366,7 @@ class Announcement(models.Model):
         managed = False
 
 
-# ────────────────────────────────────────────────────────────
 # 20. ANNOUNCEMENT READS
-# ────────────────────────────────────────────────────────────
 class AnnouncementRead(models.Model):
     announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE, db_column='announcement_id', related_name='reads')
     user = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
@@ -418,9 +378,7 @@ class AnnouncementRead(models.Model):
         unique_together = [('announcement', 'user')]
 
 
-# ────────────────────────────────────────────────────────────
 # 21. PASSWORD RESETS
-# ────────────────────────────────────────────────────────────
 class PasswordReset(models.Model):
     email = models.CharField(max_length=150)
     otp = models.CharField(max_length=6)

@@ -24,10 +24,6 @@ from .models import (
 )
 
 
-# ──────────────────────────────────────────────────────
-# Shared auth helper
-# ──────────────────────────────────────────────────────
-
 def _auth(request, allowed_roles=('admin',)):
     auth = request.headers.get('Authorization', '')
     if not auth.startswith('Bearer '):
@@ -42,10 +38,6 @@ def _auth(request, allowed_roles=('admin',)):
         return None, JsonResponse({'error': f'Access denied. Required: {allowed_roles}'}, status=403)
     return user, None
 
-
-# ══════════════════════════════════════════════════════
-# SUBJECTS
-# ══════════════════════════════════════════════════════
 
 def _serialize_subject(s):
     return {
@@ -128,10 +120,7 @@ def admin_subject_detail(request, subject_id):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-# ══════════════════════════════════════════════════════
 # CLASS SECTIONS
-# ══════════════════════════════════════════════════════
-
 def _serialize_section(cs):
     teacher_name = None
     try:
@@ -242,10 +231,7 @@ def admin_class_section_detail(request, section_id):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-# ══════════════════════════════════════════════════════
 # TEACHING ASSIGNMENTS
-# ══════════════════════════════════════════════════════
-
 @csrf_exempt
 def admin_teaching_assignments(request):
     user, err = _auth(request)
@@ -316,10 +302,7 @@ def admin_teaching_assignment_detail(request, assignment_id):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-# ══════════════════════════════════════════════════════
 # ENROLLMENTS
-# ══════════════════════════════════════════════════════
-
 @csrf_exempt
 def admin_enrollments(request):
     user, err = _auth(request)
@@ -403,10 +386,7 @@ def admin_enrollment_detail(request, enrollment_id):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-# ══════════════════════════════════════════════════════
 # TEACHER PROFILES (read-only list for dropdowns)
-# ══════════════════════════════════════════════════════
-
 @csrf_exempt
 def admin_teacher_profiles(request):
     user, err = _auth(request)
@@ -429,10 +409,7 @@ def admin_teacher_profiles(request):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-# ══════════════════════════════════════════════════════
 # STUDENT PROFILES (read-only list for dropdowns)
-# ══════════════════════════════════════════════════════
-
 @csrf_exempt
 def admin_student_profiles(request):
     user, err = _auth(request)
@@ -455,11 +432,8 @@ def admin_student_profiles(request):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-# ══════════════════════════════════════════════════════
 # DOCUMENTS (JWT-based, admin can see & delete all)
 # Filter by subject_id; upload accepts subject_id
-# ══════════════════════════════════════════════════════
-
 @csrf_exempt
 def admin_documents(request):
     user, err = _auth(request, allowed_roles=('admin', 'teacher'))
@@ -469,7 +443,6 @@ def admin_documents(request):
     if request.method == 'GET':
         qs = Document.objects.select_related('uploaded_by', 'subject', 'class_section').order_by('-uploaded_at')
 
-        # ── Advanced filters ──────────────────────────────────────────────────
         subject_id    = request.GET.get('subject_id')
         status_filter = request.GET.get('status')
         uploader_id   = request.GET.get('uploader_id')
@@ -678,10 +651,7 @@ def admin_document_detail(request, doc_id):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-# ══════════════════════════════════════════════════════
 # SYSTEM SETTINGS (AI model config)
-# ══════════════════════════════════════════════════════
-
 DEFAULT_SETTINGS = {
     'ai_model': ('gpt-3.5-turbo', 'Default AI model for chat responses'),
     'streaming_enabled': ('true', 'Enable streaming response'),
@@ -728,10 +698,7 @@ def admin_settings(request):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-# ══════════════════════════════════════════════════════
 # EXAM SCHEDULES CRUD
-# ══════════════════════════════════════════════════════
-
 def _serialize_exam(e):
     return {
         'id': e.id,
@@ -861,11 +828,8 @@ def admin_exam_schedule_detail(request, exam_id):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-# ══════════════════════════════════════════════════════
 # ANNOUNCEMENTS CRUD
 # + Read tracking (unread count, mark as read)
-# ══════════════════════════════════════════════════════
-
 def _serialize_announcement(ann, user=None):
     is_read = False
     if user:
@@ -1008,7 +972,6 @@ def admin_announcements_mark_all_read(request):
     return JsonResponse({'message': 'All announcements marked as read'})
 
 
-# ══════════════════════════════════════════════════════
 # SSE – Real-time Announcements Stream
 #
 # EventSource doesn't support Authorization headers, so the JWT token
@@ -1018,8 +981,6 @@ def admin_announcements_mark_all_read(request):
 # as SSE events. A heartbeat with unread_count is sent every 15 seconds.
 # Note: This blocks one Django worker thread per connected client.
 # For production scale, use Django Channels / Redis pub-sub.
-# ══════════════════════════════════════════════════════
-
 @csrf_exempt
 def admin_announcements_sse(request):
     """GET /api/admin/announcements/stream/?token=<jwt>"""

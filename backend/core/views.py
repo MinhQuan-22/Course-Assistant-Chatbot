@@ -215,9 +215,6 @@ def google_login(request):
             user = User.objects.filter(email=email).first()
 
         if user:
-            # ── SECURITY: Existing user – NEVER change their role via Google ──
-            # Admin accounts are immutable via Google login.
-            # Role escalation via Google is IMPOSSIBLE.
             if not user.is_active:
                 return JsonResponse({"error": "Account is inactive. Contact administrator."}, status=403)
 
@@ -239,11 +236,8 @@ def google_login(request):
             update_fields.append("last_login")
 
             user.save(update_fields=update_fields)
-            login_type = "linked"  # existing user linked/re-authenticated via Google
+            login_type = "linked"
         else:
-            # ── POLICY: Google registration ALWAYS creates student ──
-            # Admin accounts MUST be created by an existing admin via the admin panel.
-            # This prevents any accidental privilege escalation via Google OAuth.
             from .models import StudentProfile
             user = User.objects.create(
                 name=name,
@@ -251,19 +245,18 @@ def google_login(request):
                 email=email,
                 password=hash_password(secrets.token_urlsafe(24)),
                 google_id=google_id,
-                role="student",   # hardcoded: Google can never create admin/teacher
+                role="student",
                 is_active=True,
                 avatar=avatar,
             )
             user.last_login = timezone.now()
             user.save(update_fields=["last_login"])
-            # Auto-create student_profile for new Google user
             if not StudentProfile.objects.filter(user=user).exists():
                 student_code = f"SV{user.id:05d}"
                 while StudentProfile.objects.filter(student_code=student_code).exists():
                     student_code += "G"
                 StudentProfile.objects.create(user=user, student_code=student_code)
-            login_type = "registered"  # brand-new student created via Google
+            login_type = "registered"
 
         token = create_jwt_token(user)
 
@@ -446,7 +439,6 @@ def send_chat_message_stream(request):
         )
 
         def event_stream():
-            # 1. Send initialization data (ids)
             assistant_message = Message.objects.create(
                 conversation=conversation,
                 role="assistant",
@@ -461,7 +453,6 @@ def send_chat_message_stream(request):
             }
             yield f"data: {json.dumps(init_data)}\n\n"
 
-            # 2. Yield chunks
             full_answer = ""
             final_sources = []
             
@@ -472,7 +463,6 @@ def send_chat_message_stream(request):
                 c_data = {"type": "chunk", "text": chunk.get("text", "")}
                 yield f"data: {json.dumps(c_data)}\n\n"
                 
-            # 3. Save final result correctly and send end event
             assistant_message.content = full_answer
             assistant_message.sources_json = final_sources
             assistant_message.save(update_fields=["content", "sources_json"])

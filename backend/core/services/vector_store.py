@@ -42,8 +42,6 @@ def query_chroma(query_text, top_k=5):
     model = get_embedding_model()
     query_embedding = model.encode([query_text]).tolist()[0]
 
-    # Level 4.3: Hybrid Search (Semantic + Keyword via Reciprocal Rank Fusion)
-    # 1. Expand candidate pool
     candidate_k = top_k * 3
     results = collection.query(
         query_embeddings=[query_embedding],
@@ -58,7 +56,6 @@ def query_chroma(query_text, top_k=5):
     metadatas = results["metadatas"][0]
     distances = results["distances"][0]
 
-    # 2. Basic keyword extraction
     keywords = set(w.lower() for w in query_text.split() if len(w) > 2)
 
     candidates = []
@@ -73,17 +70,14 @@ def query_chroma(query_text, top_k=5):
             "dist": distances[i]
         })
 
-    # 3. Assign Keyword Rank
     candidates.sort(key=lambda x: x["keyword_score"], reverse=True)
     for rank, cand in enumerate(candidates, 1):
         cand["keyword_rank"] = rank
 
-    # 4. Compute RRF (Reciprocal Rank Fusion) Score
     rrf_k = 60
     for cand in candidates:
         cand["rrf_score"] = (1.0 / (rrf_k + cand["semantic_rank"])) + (1.0 / (rrf_k + cand["keyword_rank"]))
 
-    # 5. Final Sort & Truncate
     candidates.sort(key=lambda x: x["rrf_score"], reverse=True)
     top_candidates = candidates[:top_k]
 

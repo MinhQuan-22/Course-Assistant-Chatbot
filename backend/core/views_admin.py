@@ -23,10 +23,6 @@ from .auth_utils import decode_jwt_token, hash_password
 from .models import User, TeacherProfile, StudentProfile
 
 
-# ──────────────────────────────────────────────
-# Helpers
-# ──────────────────────────────────────────────
-
 def _get_admin(request):
     """Return (admin_user, error_response). error_response is None on success."""
     auth = request.headers.get("Authorization", "")
@@ -137,11 +133,6 @@ def _cleanup_old_profiles(user, old_role: str, new_role: str):
         StudentProfile.objects.filter(user=user).delete()
 
 
-# ──────────────────────────────────────────────
-# GET /api/admin/users/
-# POST /api/admin/users/
-# ──────────────────────────────────────────────
-
 @csrf_exempt
 def admin_users(request):
     admin, err = _get_admin(request)
@@ -197,10 +188,6 @@ def admin_users(request):
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
-# ──────────────────────────────────────────────
-# GET/PATCH/DELETE /api/admin/users/<id>/
-# ──────────────────────────────────────────────
-
 @csrf_exempt
 def admin_user_detail(request, user_id):
     admin, err = _get_admin(request)
@@ -248,7 +235,6 @@ def admin_user_detail(request, user_id):
             with transaction.atomic():
                 target.save()
 
-                # ── CRITICAL: Clean up old profile if role changed ──
                 if old_role != new_role:
                     _cleanup_old_profiles(target, old_role, new_role)
 
@@ -305,10 +291,6 @@ def admin_user_detail(request, user_id):
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
-# ──────────────────────────────────────────────
-# GET /api/admin/stats/
-# ──────────────────────────────────────────────
-
 @csrf_exempt
 @require_http_methods(["GET"])
 def admin_stats(request):
@@ -331,13 +313,6 @@ def admin_stats(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-
-# ──────────────────────────────────────────────
-# GET /api/admin/audit/profiles/
-# Lists users whose academic profile is missing or mismatched.
-# DB-level invariant: teacher→has teacher_profile, student→has student_profile.
-# This endpoint surfaces any violations for admin to fix.
-# ──────────────────────────────────────────────
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -387,11 +362,6 @@ def admin_audit_profiles(request):
         "issues": issues,
     })
 
-
-# ──────────────────────────────────────────────
-# POST /api/admin/audit/fix-profiles/
-# Auto-fix profile issues found by audit
-# ──────────────────────────────────────────────
 
 @csrf_exempt
 @require_http_methods(["POST"])

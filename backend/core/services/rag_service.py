@@ -8,12 +8,8 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# HELPERS
-# ─────────────────────────────────────────────────────────────────────────────
-
+# Helper functions
 def _get_llm_config():
-    """Lấy cấu hình API key và model từ DB System Settings."""
     api_key_setting = SystemSetting.objects.filter(setting_key='openai_api_key').first()
     model_setting = SystemSetting.objects.filter(setting_key='ai_model').first()
 
@@ -30,7 +26,6 @@ def _get_llm_config():
 def _build_llm(api_key: str, model_name: str, is_openrouter: bool,
                temperature: float = 0.1, streaming: bool = True,
                max_tokens: int = None) -> ChatOpenAI:
-    """Tạo LLM instance với config nhất quán."""
     kwargs = {
         "model": model_name,
         "api_key": api_key,
@@ -45,10 +40,6 @@ def _build_llm(api_key: str, model_name: str, is_openrouter: bool,
 
 
 def _classify_intent(query: str, context: str, api_key: str, model_name: str, is_openrouter: bool) -> str:
-    """
-    Gọi LLM router để phân loại ý định câu hỏi thành một trong các nhãn chuẩn.
-    Fallback sang rule-based nếu không có API key hoặc bị exception.
-    """
     if api_key:
         try:
             router_llm = _build_llm(api_key, model_name, is_openrouter,
@@ -71,9 +62,8 @@ def _classify_intent(query: str, context: str, api_key: str, model_name: str, is
             else:
                 return "general_chat"
         except Exception:
-            pass  # Fallback to rule-based below
+            pass
 
-    # Rule-based fallback khi không có API key
     q = query.lower()
     if any(kw in q for kw in ['tạo câu hỏi', 'bài tập', 'trắc nghiệm', 'quiz', 'ôn tập', 'đề thi']):
         return "quiz_generation"
@@ -81,24 +71,15 @@ def _classify_intent(query: str, context: str, api_key: str, model_name: str, is
         return "exam_schedule"
     if any(kw in q for kw in ['chào', 'hello', 'hi', 'bạn là ai', 'bây giờ là', 'hôm nay là']):
         return "general_chat"
-    return "document_qa"  # Default: thử RAG trước
+    return "document_qa"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# RAG CONTEXT RETRIEVAL
-# ─────────────────────────────────────────────────────────────────────────────
-
-RAG_RELEVANCE_THRESHOLD = 1.35  # Ngưỡng khoảng cách vector: > threshold = không đủ liên quan
-RAG_TOP_K = 5                    # Số chunk lấy từ ChromaDB
-RAG_CONTEXT_CHUNKS = 3           # Số chunk dùng để build context cho LLM
+# RAG config
+RAG_RELEVANCE_THRESHOLD = 1.35
+RAG_TOP_K = 5
+RAG_CONTEXT_CHUNKS = 3
 
 def _retrieve_rag_context(query: str, top_k: int = RAG_TOP_K):
-    """
-    Truy vấn ChromaDB, lọc kết quả theo ngưỡng khoảng cách, trả về:
-    - context_str: chuỗi đoạn văn bản đã ghép
-    - sources: danh sách metadata nguồn
-    - has_relevant: bool - có tìm được nội dung phù hợp không
-    """
     results = query_chroma(query, top_k=top_k)
     documents = results.get("documents", [[]])[0]
     metadatas = results.get("metadatas", [[]])[0]
@@ -109,13 +90,12 @@ def _retrieve_rag_context(query: str, top_k: int = RAG_TOP_K):
         if dist is None or dist > RAG_RELEVANCE_THRESHOLD:
             continue
         cleaned = " ".join(doc.split())
-        if len(cleaned) > 30:  # Bỏ các chunk quá ngắn (ký tự rác)
+        if len(cleaned) > 30:
             filtered.append((cleaned, meta, dist))
 
     if not filtered:
         return "", [], False
 
-    # Sắp xếp theo độ liên quan (khoảng cách nhỏ nhất = tốt nhất)
     filtered.sort(key=lambda x: x[2])
     top_chunks = filtered[:RAG_CONTEXT_CHUNKS]
 
@@ -126,21 +106,17 @@ def _retrieve_rag_context(query: str, top_k: int = RAG_TOP_K):
         page = meta.get("page")
         page_str = f" (Trang {page})" if page else ""
         context_parts.append(f"[Đoạn {i} – {doc_name}{page_str}]\n{chunk}")
-        if i == 1:  # Source chính (chunk liên quan nhất)
+        if i == 1:
             sources.append({
                 "document_name": doc_name,
                 "page": page,
                 "chunk_index": meta.get("chunk_index"),
             })
 
-    context_str = "\n\n".join(context_parts)
     return context_str, sources, True
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# SYSTEM PROMPTS
-# ─────────────────────────────────────────────────────────────────────────────
-
+# System prompts
 TA_PERSONA = (
     "Bạn là 3N – Trợ Giảng AI của hệ thống Course Assistant, đóng vai một người trợ giảng thân thiện, "
     "nhiệt tình và hiểu biết sâu về môn học. Phong cách trả lời: tự nhiên như đang nói chuyện với sinh viên, "
@@ -155,9 +131,8 @@ def _build_system_prompt_exam(context_str: str, now_str: str) -> str:
         "Dưới đây là toàn bộ lịch thi được hệ thống ghi nhận:\n"
         f"```\n{context_str}\n```\n\n"
         "Hướng dẫn trả lời:\n"
-        "- Trả lời CHÍNH XÁC theo dữ liệu trên, phân biệt rõ giữa kỳ / cuối kỳ / bổ sung.\n"
-        "- Nếu sinh viên hỏi một mốc thời gian cụ thể (ví dụ: tháng 5, tháng 6), hãy lọc và chỉ đề cập"
-        "  những kỳ thi thực sự xảy ra trong khoảng đó.\n"
+        "- Trả lời chính xác theo dữ liệu trên, phân biệt rõ giữa kỳ giữa kỳ / cuối kỳ / bổ sung.\n"
+        "- Nếu sinh viên hỏi một mốc thời gian cụ thể, hãy lọc và chỉ đề cập những kỳ thi thực sự xảy ra trong khoảng đó.\n"
         "- Nếu không có kỳ thi nào cho điều kiện đó, hãy nói rõ ràng là chưa có.\n"
         "- Đừng bịa thêm thông tin ngoài danh sách trên.\n"
         "- Giao tiếp thân thiện, tránh liệt kê máy móc."
@@ -170,7 +145,7 @@ def _build_system_prompt_rag(context_str: str) -> str:
         f"{context_str}\n\n"
         "Hướng dẫn trả lời:\n"
         "- Ưu tiên giải thích dựa trên nội dung tài liệu trên.\n"
-        "- Bạn CÓ THỂ bổ sung thêm kiến thức nền tảng của mình nếu nó giúp sinh viên hiểu rõ hơn, "
+        "- Bạn có thể bổ sung thêm kiến thức nền tảng của mình nếu nó giúp sinh viên hiểu rõ hơn, "
         "  nhưng hãy làm rõ phần nào là từ tài liệu, phần nào là kiến thức chung.\n"
         "- Trình bày sinh động, có ví dụ minh họa nếu phù hợp.\n"
         "- Cuối câu trả lời, có thể gợi ý sinh viên đọc thêm phần liên quan trong tài liệu."
@@ -198,29 +173,15 @@ def _build_system_prompt_general(now_str: str) -> str:
     )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# MAIN GENERATOR
-# ─────────────────────────────────────────────────────────────────────────────
-
 def generate_answer_stream(query: str, subject_id: int = None, history: str = ""):
-    """
-    Generator chính: phân loại intent → xây context → gọi LLM stream → yield chunks.
-    Hybrid strategy:
-      - 'exam_schedule'  → luôn tra DB, LLM format
-      - 'quiz_generation' → tạo quiz từ service
-      - 'document_qa'    → RAG first; nếu không có tài liệu liên quan → AI dùng kiến thức riêng
-      - 'general_chat'   → LLM thuần túy
-    """
     api_key, model_name, is_openrouter = _get_llm_config()
     now_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
 
-    # Build contextualized query (kèm lịch sử hội thoại)
     contextualized_query = f"{history}\nUser: {query}".strip() if history else query
 
-    # ── STEP 1: Intent Classification ─────────────────────────────────────────
+    # Step 1: Classify intent
     intent = _classify_intent(query, contextualized_query, api_key, model_name, is_openrouter)
 
-    # ── STEP 2: Quiz Generation (standalone, không cần LLM) ──────────────────
     if intent == "quiz_generation":
         count = 5
         for n in [3, 10, 15, 7]:
@@ -247,7 +208,6 @@ def generate_answer_stream(query: str, subject_id: int = None, history: str = ""
             time.sleep(0.01)
         return
 
-    # ── STEP 3: Exam Schedule (DB lookup) ────────────────────────────────────
     if intent == "exam_schedule":
         exam_query = ExamSchedule.objects.all().order_by("exam_date")
         if subject_id:
@@ -283,24 +243,19 @@ def generate_answer_stream(query: str, subject_id: int = None, history: str = ""
         system_prompt = _build_system_prompt_exam(context_str, now_str)
         extracted_sources = []
 
-    # ── STEP 4: General Chat ─────────────────────────────────────────────────
     elif intent == "general_chat":
         system_prompt = _build_system_prompt_general(now_str)
         extracted_sources = []
 
-    # ── STEP 5: Document QA – Hybrid RAG + AI Fallback ───────────────────────
-    else:  # document_qa
+    else:
         context_str, extracted_sources, has_relevant = _retrieve_rag_context(contextualized_query)
 
         if has_relevant:
             system_prompt = _build_system_prompt_rag(context_str)
         else:
-            # Không tìm thấy tài liệu liên quan → AI trả lời từ kiến thức riêng
             system_prompt = _build_system_prompt_ai_only()
 
-    # ── STEP 6: LLM Execution ────────────────────────────────────────────────
     if not api_key:
-        # Mock mode khi chưa có API key
         if intent == "exam_schedule":
             mock = f"[Mock Mode] Đã lấy được dữ liệu lịch thi nhưng chưa có AI API Key để phân tích."
         elif intent == "general_chat":
