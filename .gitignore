@@ -22,6 +22,11 @@ staticfiles/
 # Environment variables
 # ======================
 .env
+.env.*
+!.env.example
+frontend/.env.local
+frontend/.env.*.local
+!frontend/.env.example
 
 # ======================
 # VS Code
@@ -29,10 +34,11 @@ staticfiles/
 .vscode/
 
 # ======================
-# OS files
+# OS / macOS
 # ======================
 .DS_Store
 Thumbs.db
+__MACOSX/
 
 # ======================
 # Node (frontend)
@@ -59,10 +65,9 @@ yarn-error.log*
 # ======================
 coverage/
 
-# Environment variables
-.env
-.env.*
-
-# Uploaded documents
+# Uploaded documents (runtime data – not for Git)
+backend/uploads/
+!backend/uploads/.gitkeep
 media/
-uploads/
+
+# Sample documents are tracked intentionally in sample_documents/

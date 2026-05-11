@@ -1,11 +1,13 @@
 import chromadb
 from sentence_transformers import SentenceTransformer
+from django.conf import settings
 
-CHROMA_HOST = "127.0.0.1"
-CHROMA_PORT = 8001
+CHROMA_HOST = getattr(settings, "CHROMA_HOST", "127.0.0.1")
+CHROMA_PORT = getattr(settings, "CHROMA_PORT", 8001)
 COLLECTION_NAME = "course_documents"
 
 client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
+
 _embedding_model = None
 
 
